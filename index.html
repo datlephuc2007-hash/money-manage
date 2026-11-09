@@ -1257,7 +1257,7 @@ const firebaseConfig = {
         try {
           localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
           if (showToast) {
-            this.showToast('✅ Đã lưu thay đổi!');
+            this.showToast('Đã lưu thay đổi!');
           }
           if (pushToFirebase && !this.isSyncingFromRemote) {
             this.pushDataToFirebase();
