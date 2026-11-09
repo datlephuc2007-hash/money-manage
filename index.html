@@ -122,34 +122,36 @@
 
   <!-- Top Navigation Bar -->
   <header class="sticky top-0 z-40 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-warm-border">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-18 py-2.5">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      
+      <!-- Top Row: Logo, Brand & Actions -->
+      <div class="flex items-center justify-between py-2 sm:py-3 gap-2">
         
         <!-- Logo & User Profile Name -->
-        <div class="flex items-center space-x-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-warm-accent text-white flex items-center justify-center font-black text-xl shadow-cream-sm">
+        <div class="flex items-center space-x-2.5 sm:space-x-3.5 min-w-0">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-warm-accent text-white flex-shrink-0 flex items-center justify-center font-black text-lg sm:text-xl shadow-cream-sm">
             💰
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-lg sm:text-xl font-extrabold text-cream-900 tracking-tight">
-                Money Management
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <h1 class="text-base sm:text-xl font-extrabold text-cream-900 tracking-tight whitespace-nowrap">
+                Money Manage
               </h1>
               <!-- Clickable User Name Badge -->
-              <button onclick="app.openUserProfileModal()" class="px-3.5 py-1 rounded-xl bg-cream-200 hover:bg-cream-300 text-cream-900 border border-warm-border shadow-xs transition flex items-center gap-2" title="Nhấn để đổi tên người dùng">
-                <span id="headerUserName" class="text-base sm:text-lg font-black text-warm-accent">Dat</span>
-                <span class="text-xs text-cream-500">✏️</span>
+              <button onclick="app.openUserProfileModal()" class="px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-xl bg-cream-200 hover:bg-cream-300 text-cream-900 border border-warm-border shadow-xs transition flex items-center gap-1 flex-shrink-0" title="Nhấn để đổi tên người dùng">
+                <span id="headerUserName" class="text-sm sm:text-base font-black text-warm-accent">Dat</span>
+                <span class="text-[10px] text-cream-500">✏️</span>
               </button>
             </div>
-            <p class="text-xs sm:text-sm text-cream-600 hidden sm:block">Quản lý chi tiêu cá nhân thông minh, dễ nhìn & tiện lợi</p>
+            <p class="text-xs text-cream-600 hidden sm:block">Quản lý chi tiêu cá nhân thông minh & tiện lợi</p>
           </div>
         </div>
 
-        <!-- Month Navigator & Quick Actions -->
-        <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Month Navigator (On desktop) & Quick Actions -->
+        <div class="flex items-center space-x-1.5 sm:space-x-3 flex-shrink-0">
           
-          <!-- Dynamic Month & Year Picker (Supports 2026, 2027, 2028...) -->
-          <div class="flex items-center bg-white border border-warm-border rounded-xl shadow-sm p-1">
+          <!-- Month Picker (Desktop view) -->
+          <div class="hidden sm:flex items-center bg-white border border-warm-border rounded-xl shadow-sm p-1">
             <button onclick="app.prevMonth()" class="p-1.5 text-cream-600 hover:text-cream-900 rounded-lg hover:bg-cream-100 transition" title="Tháng trước">
               ◀
             </button>
@@ -162,36 +164,57 @@
           </div>
 
           <!-- Firebase Cloud Sync Button -->
-          <button onclick="app.openFirebaseModal()" id="btnFirebaseStatus" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Cài đặt đồng bộ đám mây Firebase">
+          <button onclick="app.openFirebaseModal()" id="btnFirebaseStatus" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Cài đặt đồng bộ đám mây Firebase">
             <span id="firebaseIndicator" class="w-2.5 h-2.5 rounded-full bg-cream-400"></span>
             <span class="hidden md:inline" id="firebaseStatusText">Firebase Cloud</span>
             <span class="text-xs">🔥</span>
           </button>
 
           <!-- Settings Button -->
-          <button onclick="app.openSettingsModal()" class="p-2.5 text-cream-700 hover:text-cream-900 bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Cài đặt hạn mức">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <button onclick="app.openSettingsModal()" class="p-2 sm:p-2.5 text-cream-700 hover:text-cream-900 bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Cài đặt hạn mức">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           </button>
 
           <!-- Backup / Restore Button -->
-          <button onclick="app.openDataModal()" class="p-2.5 text-cream-700 hover:text-cream-900 bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Sao lưu / Khôi phục dữ liệu">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <button onclick="app.openDataModal()" class="p-2 sm:p-2.5 text-cream-700 hover:text-cream-900 bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Sao lưu / Khôi phục dữ liệu">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
           </button>
         </div>
       </div>
+
+      <!-- Mobile-only Month Navigator (Row 2 on small screens) -->
+      <div class="sm:hidden pb-2 flex items-center justify-between bg-white/80 border border-warm-border rounded-xl px-2 py-1 shadow-xs">
+        <button onclick="app.prevMonth()" class="px-3 py-1 text-cream-700 hover:text-cream-900 font-bold rounded-lg text-xs transition">
+          ◀ Tháng trước
+        </button>
+        <div class="text-xs font-black text-cream-900 cursor-pointer hover:text-warm-accent flex items-center gap-1" onclick="app.openMonthPickerModal()">
+          <span id="displayCurrentMonthMobile">Tháng 11/2026</span>
+          <span class="text-warm-accent">📅</span>
+        </div>
+        <button onclick="app.nextMonth()" class="px-3 py-1 text-cream-700 hover:text-cream-900 font-bold rounded-lg text-xs transition">
+          Tháng sau ▶
+        </button>
+      </div>
+
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <nav class="flex space-x-2 sm:space-x-4 border-t border-warm-border/60 py-2.5 overflow-x-auto text-sm sm:text-base font-bold" aria-label="Tabs">
-        <button id="tabBtn-general" onclick="app.switchTab('general')" class="tab-btn active px-4 py-2 rounded-xl bg-warm-accent text-white flex items-center gap-2 whitespace-nowrap shadow-sm transition">
-          <span class="text-base">📊</span> Quản Lý Chung
+    <!-- Navigation Tabs (Equal width, fits 100% on phone screens) -->
+    <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 border-t border-warm-border/60">
+      <nav class="flex w-full space-x-1 sm:space-x-3 py-2 text-xs sm:text-base font-bold" aria-label="Tabs">
+        <button id="tabBtn-general" onclick="app.switchTab('general')" class="tab-btn active flex-1 py-2 px-1 sm:px-4 rounded-xl bg-warm-accent text-white flex items-center justify-center gap-1 sm:gap-2 shadow-sm transition">
+          <span class="text-sm sm:text-base">📊</span>
+          <span class="hidden sm:inline">Quản Lý Chung</span>
+          <span class="sm:hidden">Quản Lý</span>
         </button>
-        <button id="tabBtn-meals" onclick="app.switchTab('meals')" class="tab-btn px-4 py-2 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center gap-2 whitespace-nowrap transition">
-          <span class="text-base">🍱</span> Nhật Ký Đồ Ăn (Từng Ngày)
+        <button id="tabBtn-meals" onclick="app.switchTab('meals')" class="tab-btn flex-1 py-2 px-1 sm:px-4 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center justify-center gap-1 sm:gap-2 transition">
+          <span class="text-sm sm:text-base">🍱</span>
+          <span class="hidden sm:inline">Nhật Ký Đồ Ăn (Từng Ngày)</span>
+          <span class="sm:hidden">Ăn Uống</span>
         </button>
-        <button id="tabBtn-charts" onclick="app.switchTab('charts')" class="tab-btn px-4 py-2 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center gap-2 whitespace-nowrap transition">
-          <span class="text-base">📈</span> Biểu Đồ & Thống Kê
+        <button id="tabBtn-charts" onclick="app.switchTab('charts')" class="tab-btn flex-1 py-2 px-1 sm:px-4 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center justify-center gap-1 sm:gap-2 transition">
+          <span class="text-sm sm:text-base">📈</span>
+          <span class="hidden sm:inline">Biểu Đồ & Thống Kê</span>
+          <span class="sm:hidden">Biểu Đồ</span>
         </button>
       </nav>
     </div>
@@ -1246,7 +1269,13 @@ const firebaseConfig = {
       }
 
       init() {
+        if (window.innerWidth < 768) {
+          this.mealViewMode = 'card';
+        }
         this.renderAll();
+        if (this.mealViewMode === 'card') {
+          this.setMealView('card');
+        }
         // Init Firebase if config saved
         if (this.data.firebaseConfigRaw) {
           this.initFirebase(this.data.firebaseConfigRaw, false);
@@ -1271,7 +1300,10 @@ const firebaseConfig = {
         const uName = this.data.userName || "Dat";
         document.getElementById('headerUserName').textContent = uName;
         document.getElementById('bannerUserBadge').textContent = 'Hồ sơ: ' + uName;
-        document.getElementById('displayCurrentMonth').textContent = this.data.currentMonthKey;
+        const elDesk = document.getElementById('displayCurrentMonth');
+        const elMob = document.getElementById('displayCurrentMonthMobile');
+        if (elDesk) elDesk.textContent = this.data.currentMonthKey;
+        if (elMob) elMob.textContent = 'Tháng ' + this.data.currentMonthKey;
         document.getElementById('bannerMonthBadge').textContent = 'Tháng ' + this.data.currentMonthKey;
 
         this.renderGeneralOverview();
@@ -1287,10 +1319,12 @@ const firebaseConfig = {
           const btn = document.getElementById(`tabBtn-${t}`);
           const section = document.getElementById(`tab-${t}`);
           if (t === tabId) {
-            btn.className = "tab-btn active px-4 py-2 rounded-xl bg-warm-accent text-white flex items-center gap-2 whitespace-nowrap shadow-sm transition";
+            btn.classList.add('bg-warm-accent', 'text-white', 'shadow-sm');
+            btn.classList.remove('text-cream-700', 'hover:bg-cream-200/60');
             section.classList.remove('hidden');
           } else {
-            btn.className = "tab-btn px-4 py-2 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center gap-2 whitespace-nowrap transition";
+            btn.classList.remove('bg-warm-accent', 'text-white', 'shadow-sm');
+            btn.classList.add('text-cream-700', 'hover:bg-cream-200/60');
             section.classList.add('hidden');
           }
         });
