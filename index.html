@@ -1,0 +1,2352 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Chi Tiêu Cá Nhân</title>
+  <!-- Google Fonts: Plus Jakarta Sans & Be Vietnam Pro -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Firebase Compat CDN (Google Cloud Realtime Sync) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Be Vietnam Pro"', '"Plus Jakarta Sans"', 'sans-serif'],
+            heading: ['"Plus Jakarta Sans"', '"Be Vietnam Pro"', 'sans-serif'],
+          },
+          colors: {
+            cream: {
+              50: '#FDFBF7',
+              100: '#F8F4EC',
+              200: '#F0E7DB',
+              300: '#E4D5C1',
+              400: '#D2BDA2',
+              500: '#B89F82',
+              600: '#9B7F62',
+              700: '#7B634B',
+              800: '#5A4634',
+              900: '#2E261E',
+            },
+            warm: {
+              card: '#FFFFFF',
+              cardMuted: '#FAF7F2',
+              border: '#E8DFD3',
+              dark: '#2A241E',
+              accent: '#B07D4F',
+              accentHover: '#98683D',
+              sage: '#4F772D',
+              sageLight: '#EAF2E8',
+              rose: '#BC4749',
+              roseLight: '#FDF0F0',
+              amber: '#D4A373'
+            }
+          },
+          boxShadow: {
+            'cream-sm': '0 2px 8px rgba(90, 70, 52, 0.06)',
+            'cream-md': '0 8px 24px rgba(90, 70, 52, 0.09)',
+            'cream-lg': '0 14px 36px rgba(90, 70, 52, 0.13)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F8F4EC;
+      color: #2A241E;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 15px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F0E7DB;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D2BDA2;
+      border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #B89F82;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    .table-cell-input {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 4px 8px;
+      transition: all 0.2s;
+      width: 100%;
+      font-size: 14px;
+    }
+    .table-cell-input:hover {
+      border-color: #D2BDA2;
+      background-color: #FFFFFF;
+    }
+    .table-cell-input:focus {
+      outline: none;
+      border-color: #B07D4F;
+      background-color: #FFFFFF;
+      box-shadow: 0 0 0 2px rgba(176, 125, 79, 0.2);
+    }
+    .pulse-dot {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-cream-300 selection:text-cream-900">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-warm-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-18 py-2.5">
+        
+        <!-- Logo & User Profile Name -->
+        <div class="flex items-center space-x-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-warm-accent text-white flex items-center justify-center font-black text-xl shadow-cream-sm">
+            💰
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg sm:text-xl font-extrabold text-cream-900 tracking-tight">
+                Money Management
+              </h1>
+              <!-- Clickable User Name Badge -->
+              <button onclick="app.openUserProfileModal()" class="px-3.5 py-1 rounded-xl bg-cream-200 hover:bg-cream-300 text-cream-900 border border-warm-border shadow-xs transition flex items-center gap-2" title="Nhấn để đổi tên người dùng">
+                <span id="headerUserName" class="text-base sm:text-lg font-black text-warm-accent">Dat</span>
+                <span class="text-xs text-cream-500">✏️</span>
+              </button>
+            </div>
+            <p class="text-xs sm:text-sm text-cream-600 hidden sm:block">Quản lý chi tiêu cá nhân thông minh, dễ nhìn & tiện lợi</p>
+          </div>
+        </div>
+
+        <!-- Month Navigator & Quick Actions -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          
+          <!-- Dynamic Month & Year Picker (Supports 2026, 2027, 2028...) -->
+          <div class="flex items-center bg-white border border-warm-border rounded-xl shadow-sm p-1">
+            <button onclick="app.prevMonth()" class="p-1.5 text-cream-600 hover:text-cream-900 rounded-lg hover:bg-cream-100 transition" title="Tháng trước">
+              ◀
+            </button>
+            <div class="px-2 text-xs sm:text-sm font-bold text-cream-900 whitespace-nowrap cursor-pointer hover:text-warm-accent" onclick="app.openMonthPickerModal()" id="displayCurrentMonth">
+              11/2026
+            </div>
+            <button onclick="app.nextMonth()" class="p-1.5 text-cream-600 hover:text-cream-900 rounded-lg hover:bg-cream-100 transition" title="Tháng sau">
+              ▶
+            </button>
+          </div>
+
+          <!-- Firebase Cloud Sync Button -->
+          <button onclick="app.openFirebaseModal()" id="btnFirebaseStatus" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Cài đặt đồng bộ đám mây Firebase">
+            <span id="firebaseIndicator" class="w-2.5 h-2.5 rounded-full bg-cream-400"></span>
+            <span class="hidden md:inline" id="firebaseStatusText">Firebase Cloud</span>
+            <span class="text-xs">🔥</span>
+          </button>
+
+          <!-- Settings Button -->
+          <button onclick="app.openSettingsModal()" class="p-2.5 text-cream-700 hover:text-cream-900 bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Cài đặt hạn mức">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          </button>
+
+          <!-- Backup / Restore Button -->
+          <button onclick="app.openDataModal()" class="p-2.5 text-cream-700 hover:text-cream-900 bg-white hover:bg-cream-100 border border-warm-border rounded-xl shadow-sm transition" title="Sao lưu / Khôi phục dữ liệu">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav class="flex space-x-2 sm:space-x-4 border-t border-warm-border/60 py-2.5 overflow-x-auto text-sm sm:text-base font-bold" aria-label="Tabs">
+        <button id="tabBtn-general" onclick="app.switchTab('general')" class="tab-btn active px-4 py-2 rounded-xl bg-warm-accent text-white flex items-center gap-2 whitespace-nowrap shadow-sm transition">
+          <span class="text-base">📊</span> Quản Lý Chung
+        </button>
+        <button id="tabBtn-meals" onclick="app.switchTab('meals')" class="tab-btn px-4 py-2 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center gap-2 whitespace-nowrap transition">
+          <span class="text-base">🍱</span> Nhật Ký Đồ Ăn (Từng Ngày)
+        </button>
+        <button id="tabBtn-charts" onclick="app.switchTab('charts')" class="tab-btn px-4 py-2 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center gap-2 whitespace-nowrap transition">
+          <span class="text-base">📈</span> Biểu Đồ & Thống Kê
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: QUẢN LÝ CHUNG (CỐ ĐỊNH, ĂN UỐNG, LINH HOẠT) -->
+    <!-- ========================================== -->
+    <section id="tab-general" class="space-y-7">
+
+      <!-- Overall Monthly Stats Banner -->
+      <div class="bg-gradient-to-r from-[#FAF7F2] via-white to-[#F6F0E6] rounded-2xl p-6 sm:p-7 border border-warm-border shadow-cream-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div>
+            <div class="flex items-center gap-2.5">
+              <span class="text-xs uppercase tracking-wider font-extrabold text-warm-accent">TỔNG QUAN CHI TIÊU</span>
+              <span id="bannerMonthBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-md bg-cream-200 text-cream-800">Tháng 11/2026</span>
+              <span id="bannerUserBadge" class="text-sm font-extrabold px-3 py-1 rounded-lg bg-warm-accent/15 text-warm-accent">Hồ sơ: Dat</span>
+            </div>
+            <h2 class="text-2xl sm:text-4xl font-black text-cream-900 mt-2 tracking-tight">
+              <span id="statTotalSpent">0</span> <span class="text-lg sm:text-xl font-medium text-cream-600">/ <span id="statTotalBudget">0</span> đ</span>
+            </h2>
+            <p class="text-sm sm:text-base text-cream-700 mt-2 flex flex-wrap items-center gap-2.5">
+              <span>Còn lại trong tháng: <strong id="statTotalRemaining" class="text-warm-sage font-extrabold text-base sm:text-lg">0 đ</strong></span>
+              <span class="text-cream-300">•</span>
+              <span id="statQuote" class="italic text-warm-accent font-semibold">"Dư ra đi chơi nòo! ✨"</span>
+            </p>
+          </div>
+
+          <!-- Quick Progress Bar -->
+          <div class="w-full lg:w-96 space-y-2.5">
+            <div class="flex justify-between text-xs sm:text-sm font-bold text-cream-800">
+              <span>Tiến độ ngân sách tháng</span>
+              <span id="statSpentPercent" class="text-sm font-extrabold">0%</span>
+            </div>
+            <div class="w-full h-4 bg-cream-200 rounded-full overflow-hidden p-0.5">
+              <div id="statProgressBar" class="h-full bg-warm-accent rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-xs text-cream-500 font-medium">
+              <span>Ngưỡng an toàn &lt; 85%</span>
+              <span id="statOverbudgetWarning" class="text-warm-rose hidden font-bold">⚠️ Vượt hạn mức tháng!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Main Category Cards (Cố định, Ăn uống, Linh hoạt) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- CARD 1: CỐ ĐỊNH -->
+        <div class="bg-white rounded-2xl border border-warm-border p-5 sm:p-6 shadow-cream-sm hover:shadow-cream-md transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="text-2xl">📌</span>
+                <h3 class="font-extrabold text-cream-900 text-lg mt-1">Tiền Cố Định</h3>
+                <p class="text-xs sm:text-sm text-cream-500">Điện nước, wifi, xăng, thẻ gym, gửi xe...</p>
+              </div>
+              <button onclick="app.editBudgetPrompt('fixed')" class="text-xs sm:text-sm text-warm-accent hover:text-warm-accentHover font-bold bg-cream-100 hover:bg-cream-200 px-3 py-1.5 rounded-xl transition">
+                Sửa hạn mức
+              </button>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-cream-100 space-y-2.5 text-sm">
+              <div class="flex justify-between items-baseline">
+                <span class="text-cream-600 font-medium">Thực chi:</span>
+                <span id="fixedSpent" class="font-black text-cream-900 text-xl sm:text-2xl">0 đ</span>
+              </div>
+              <div class="flex justify-between items-baseline text-cream-600">
+                <span class="font-medium">Hạn mức đặt ra:</span>
+                <span id="fixedBudget" class="font-bold text-cream-800 text-base">1,000,000 đ</span>
+              </div>
+              <div class="flex justify-between items-baseline">
+                <span class="text-cream-600 font-medium">Còn lại:</span>
+                <span id="fixedRemaining" class="font-extrabold text-warm-sage text-base sm:text-lg">0 đ</span>
+              </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="w-full h-2.5 bg-cream-200 rounded-full mt-4 overflow-hidden">
+              <div id="fixedProgress" class="h-full bg-warm-accent rounded-full transition-all duration-300" style="width: 67%"></div>
+            </div>
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-cream-100 flex items-center justify-between text-xs sm:text-sm">
+            <span id="fixedItemCount" class="text-cream-600 font-medium">0 khoản chi</span>
+            <a href="#fixed-table-section" class="text-warm-accent font-bold hover:underline">Xem danh sách ↓</a>
+          </div>
+        </div>
+
+        <!-- CARD 2: ĂN UỐNG -->
+        <div class="bg-white rounded-2xl border border-warm-border p-5 sm:p-6 shadow-cream-sm hover:shadow-cream-md transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="text-2xl">🍲</span>
+                <h3 class="font-extrabold text-cream-900 text-lg mt-1">Tiền Ăn Uống</h3>
+                <p class="text-xs sm:text-sm text-cream-500">Mục tiêu 85k/ngày (25k sáng, 30k trưa/tối)</p>
+              </div>
+              <button onclick="app.editBudgetPrompt('meals')" class="text-xs sm:text-sm text-warm-accent hover:text-warm-accentHover font-bold bg-cream-100 hover:bg-cream-200 px-3 py-1.5 rounded-xl transition">
+                Sửa hạn mức
+              </button>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-cream-100 space-y-2.5 text-sm">
+              <div class="flex justify-between items-baseline">
+                <span class="text-cream-600 font-medium">Thực chi (tự động):</span>
+                <span id="mealsSpent" class="font-black text-cream-900 text-xl sm:text-2xl">0 đ</span>
+              </div>
+              <div class="flex justify-between items-baseline text-cream-600">
+                <span class="font-medium">Hạn mức tháng:</span>
+                <span id="mealsBudget" class="font-bold text-cream-800 text-base">1,000,000 đ</span>
+              </div>
+              <div class="flex justify-between items-baseline">
+                <span class="text-cream-600 font-medium">Còn lại:</span>
+                <span id="mealsRemaining" class="font-extrabold text-warm-sage text-base sm:text-lg">0 đ</span>
+              </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="w-full h-2.5 bg-cream-200 rounded-full mt-4 overflow-hidden">
+              <div id="mealsProgress" class="h-full bg-warm-accent rounded-full transition-all duration-300" style="width: 23%"></div>
+            </div>
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-cream-100 flex items-center justify-between text-xs sm:text-sm">
+            <span class="text-cream-600 font-medium">Theo nhật ký từng ngày</span>
+            <button onclick="app.switchTab('meals')" class="text-warm-accent font-bold hover:underline">Vào nhập đồ ăn →</button>
+          </div>
+        </div>
+
+        <!-- CARD 3: LINH HOẠT -->
+        <div class="bg-white rounded-2xl border border-warm-border p-5 sm:p-6 shadow-cream-sm hover:shadow-cream-md transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="text-2xl">🛍️</span>
+                <h3 class="font-extrabold text-cream-900 text-lg mt-1">Tiền Linh Hoạt</h3>
+                <p class="text-xs sm:text-sm text-cream-500">Phụ phẩm, bàn chải, ăn vặt, đi chơi...</p>
+              </div>
+              <button onclick="app.editBudgetPrompt('flexible')" class="text-xs sm:text-sm text-warm-accent hover:text-warm-accentHover font-bold bg-cream-100 hover:bg-cream-200 px-3 py-1.5 rounded-xl transition">
+                Sửa hạn mức
+              </button>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-cream-100 space-y-2.5 text-sm">
+              <div class="flex justify-between items-baseline">
+                <span class="text-cream-600 font-medium">Thực chi:</span>
+                <span id="flexibleSpent" class="font-black text-cream-900 text-xl sm:text-2xl">0 đ</span>
+              </div>
+              <div class="flex justify-between items-baseline text-cream-600">
+                <span class="font-medium">Hạn mức đặt ra:</span>
+                <span id="flexibleBudget" class="font-bold text-cream-800 text-base">500,000 đ</span>
+              </div>
+              <div class="flex justify-between items-baseline">
+                <span class="text-cream-600 font-medium">Còn lại:</span>
+                <span id="flexibleRemaining" class="font-extrabold text-warm-sage text-base sm:text-lg">0 đ</span>
+              </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="w-full h-2.5 bg-cream-200 rounded-full mt-4 overflow-hidden">
+              <div id="flexibleProgress" class="h-full bg-warm-accent rounded-full transition-all duration-300" style="width: 55%"></div>
+            </div>
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-cream-100 flex items-center justify-between text-xs sm:text-sm">
+            <span id="flexibleItemCount" class="text-cream-600 font-medium">0 khoản chi</span>
+            <a href="#flexible-table-section" class="text-warm-accent font-bold hover:underline">Xem danh sách ↓</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Chart Preview & Detail Tables Container -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Chart Preview in General Tab -->
+        <div class="bg-white rounded-2xl border border-warm-border p-5 sm:p-6 shadow-cream-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="font-extrabold text-cream-900 text-base">Tỷ Lệ Chi Tiêu 3 Nhóm</h4>
+              <span class="text-xs bg-cream-200 text-cream-800 font-bold px-2 py-0.5 rounded">Thực chi</span>
+            </div>
+            <div class="relative w-full h-56 flex items-center justify-center">
+              <canvas id="generalDonutChart"></canvas>
+            </div>
+          </div>
+          <div class="mt-5 pt-4 border-t border-cream-100 text-sm text-cream-700 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#B07D4F]"></span> 📌 Tiền Cố định</span>
+              <span id="legendFixed" class="font-bold text-cream-900">0%</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#4F772D]"></span> 🍲 Tiền Ăn uống</span>
+              <span id="legendMeals" class="font-bold text-cream-900">0%</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#D4A373]"></span> 🛍️ Tiền Linh hoạt</span>
+              <span id="legendFlexible" class="font-bold text-cream-900">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expense Tables: 2 Columns for Fixed & Flexible -->
+        <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- TABLE 1: KHOẢN CHI CỐ ĐỊNH -->
+          <div id="fixed-table-section" class="bg-white rounded-2xl border border-warm-border p-5 sm:p-6 shadow-cream-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3.5">
+                <div>
+                  <h4 class="font-extrabold text-cream-900 text-base flex items-center gap-2">
+                    <span>📌</span> Chi Phí Cố Định
+                  </h4>
+                  <p class="text-xs text-cream-500">Các khoản hàng tháng đều trả</p>
+                </div>
+                <button onclick="app.addExpenseModal('fixed')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-warm-accent text-white hover:bg-warm-accentHover shadow-sm transition">
+                  <span>+ Popup</span>
+                </button>
+              </div>
+
+              <!-- List container with inline row -->
+              <div class="overflow-y-auto max-h-80 border border-cream-200 rounded-xl divide-y divide-cream-100 bg-white">
+                <table class="w-full text-sm text-left">
+                  <thead class="bg-cream-100 text-cream-800 sticky top-0 font-bold text-xs uppercase tracking-wider">
+                    <tr>
+                      <th class="py-2.5 px-3">Tên khoản</th>
+                      <th class="py-2.5 px-3 text-right">Số tiền (k)</th>
+                      <th class="py-2.5 px-2 text-center w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="fixedExpenseList" class="divide-y divide-cream-100 bg-white">
+                    <!-- Dynamic rendering -->
+                  </tbody>
+                  <!-- Inline Quick Add Row -->
+                  <tfoot class="bg-cream-50/80 border-t-2 border-cream-200">
+                    <tr>
+                      <td class="py-2 px-2.5">
+                        <input type="text" id="inlineAddName-fixed" placeholder="+ Nhập tên khoản mới..." 
+                          onkeydown="if(event.key==='Enter') app.quickAddInlineExpense('fixed')"
+                          class="table-cell-input bg-white text-sm font-medium border-cream-300">
+                      </td>
+                      <td class="py-2 px-2 text-right">
+                        <input type="number" id="inlineAddAmount-fixed" placeholder="Số tiền (k)" 
+                          onkeydown="if(event.key==='Enter') app.quickAddInlineExpense('fixed')"
+                          class="table-cell-input bg-white text-right text-sm font-bold w-24 border-cream-300">
+                      </td>
+                      <td class="py-2 px-2 text-center">
+                        <button onclick="app.quickAddInlineExpense('fixed')" class="w-7 h-7 rounded-lg bg-warm-accent hover:bg-warm-accentHover text-white font-bold flex items-center justify-center transition shadow-sm text-sm" title="Thêm ngay (Enter)">
+                          +
+                        </button>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <p class="text-[11px] text-cream-500 mt-1 italic">* Gõ tên & số tiền ở dòng cuối rồi bấm Enter để thêm liên tục nhiều khoản!</p>
+            </div>
+
+            <!-- Total Box with Larger Font Size -->
+            <div class="mt-4 p-3.5 bg-cream-100/70 rounded-xl border border-cream-200 flex justify-between items-center">
+              <span class="text-cream-700 font-extrabold text-sm sm:text-base uppercase tracking-wide">TỔNG CỐ ĐỊNH:</span>
+              <span id="fixedTableTotal" class="font-black text-warm-accent text-xl sm:text-2xl">0 đ</span>
+            </div>
+          </div>
+
+          <!-- TABLE 2: KHOẢN CHI LINH HOẠT -->
+          <div id="flexible-table-section" class="bg-white rounded-2xl border border-warm-border p-5 sm:p-6 shadow-cream-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3.5">
+                <div>
+                  <h4 class="font-extrabold text-cream-900 text-base flex items-center gap-2">
+                    <span>🛍️</span> Chi Phí Linh Hoạt
+                  </h4>
+                  <p class="text-xs text-cream-500">Phụ phẩm, mua sắm, bạn bè mượn...</p>
+                </div>
+                <button onclick="app.addExpenseModal('flexible')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-warm-accent text-white hover:bg-warm-accentHover shadow-sm transition">
+                  <span>+ Popup</span>
+                </button>
+              </div>
+
+              <!-- List container with inline row -->
+              <div class="overflow-y-auto max-h-80 border border-cream-200 rounded-xl divide-y divide-cream-100 bg-white">
+                <table class="w-full text-sm text-left">
+                  <thead class="bg-cream-100 text-cream-800 sticky top-0 font-bold text-xs uppercase tracking-wider">
+                    <tr>
+                      <th class="py-2.5 px-3">Tên khoản</th>
+                      <th class="py-2.5 px-3 text-right">Số tiền (k)</th>
+                      <th class="py-2.5 px-2 text-center w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="flexibleExpenseList" class="divide-y divide-cream-100 bg-white">
+                    <!-- Dynamic rendering -->
+                  </tbody>
+                  <!-- Inline Quick Add Row -->
+                  <tfoot class="bg-cream-50/80 border-t-2 border-cream-200">
+                    <tr>
+                      <td class="py-2 px-2.5">
+                        <input type="text" id="inlineAddName-flexible" placeholder="+ Nhập tên khoản mới..." 
+                          onkeydown="if(event.key==='Enter') app.quickAddInlineExpense('flexible')"
+                          class="table-cell-input bg-white text-sm font-medium border-cream-300">
+                      </td>
+                      <td class="py-2 px-2 text-right">
+                        <input type="number" id="inlineAddAmount-flexible" placeholder="Số tiền (k)" 
+                          onkeydown="if(event.key==='Enter') app.quickAddInlineExpense('flexible')"
+                          class="table-cell-input bg-white text-right text-sm font-bold w-24 border-cream-300">
+                      </td>
+                      <td class="py-2 px-2 text-center">
+                        <button onclick="app.quickAddInlineExpense('flexible')" class="w-7 h-7 rounded-lg bg-warm-accent hover:bg-warm-accentHover text-white font-bold flex items-center justify-center transition shadow-sm text-sm" title="Thêm ngay (Enter)">
+                          +
+                        </button>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <p class="text-[11px] text-cream-500 mt-1 italic">* Gõ tên & số tiền ở dòng cuối rồi bấm Enter để thêm liên tục nhiều khoản!</p>
+            </div>
+
+            <!-- Total Box with Larger Font Size -->
+            <div class="mt-4 p-3.5 bg-cream-100/70 rounded-xl border border-cream-200 flex justify-between items-center">
+              <span class="text-cream-700 font-extrabold text-sm sm:text-base uppercase tracking-wide">TỔNG LINH HOẠT:</span>
+              <span id="flexibleTableTotal" class="font-black text-warm-accent text-xl sm:text-2xl">0 đ</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: NHẬT KÝ ĐỒ ĂN TỪNG BUỔI TỪNG NGÀY -->
+    <!-- ========================================== -->
+    <section id="tab-meals" class="hidden space-y-6">
+
+      <!-- Subheader with Week Navigator & Target Info -->
+      <div class="bg-white rounded-2xl border border-warm-border p-5 shadow-cream-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          
+          <!-- Week Selector Tabs -->
+          <div>
+            <div class="text-xs font-extrabold text-warm-accent uppercase tracking-wider mb-2">TUẦN TRONG THÁNG</div>
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1" id="weekTabsContainer">
+              <!-- Dynamically generated week buttons -->
+            </div>
+          </div>
+
+          <!-- Target Setting & Quick Stats for Week -->
+          <div class="flex flex-wrap items-center gap-4 bg-cream-100/80 p-3.5 rounded-2xl border border-cream-200">
+            <div>
+              <div class="text-xs text-cream-600 font-semibold">Mục tiêu ăn uống / ngày:</div>
+              <div class="text-base font-black text-cream-900 flex items-center gap-1.5">
+                <span id="displayDailyMealTarget">85,000 đ</span>
+                <span class="text-xs text-cream-600 font-medium">(S: <span id="displayBfTarget">25</span>k, T: <span id="displayLnTarget">30</span>k, T: <span id="displayDnTarget">30</span>k)</span>
+                <button onclick="app.openMealTargetModal()" class="ml-1 text-xs text-warm-accent hover:text-warm-accentHover font-bold underline">
+                  Sửa
+                </button>
+              </div>
+            </div>
+            <div class="h-8 w-px bg-cream-300 hidden sm:block"></div>
+            <div>
+              <div class="text-xs text-cream-600 font-semibold">Chi tiêu tuần này:</div>
+              <div class="text-base font-black text-cream-900" id="currentWeekTotal">0 đ</div>
+            </div>
+            <div class="h-8 w-px bg-cream-300 hidden sm:block"></div>
+            <div>
+              <div class="text-xs text-cream-600 font-semibold">Dư ra tuần này:</div>
+              <div class="text-base font-black text-warm-sage" id="currentWeekSave">0 đ</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- View Switcher (Dạng Bảng Tuần Sheet vs Dạng Thẻ Ngày Mobile) -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xs sm:text-sm font-bold text-cream-800 uppercase tracking-wide">Chế độ xem:</span>
+          <div class="inline-flex rounded-xl border border-warm-border p-1 bg-cream-100">
+            <button id="viewBtnTable" onclick="app.setMealView('table')" class="px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-white text-cream-900 shadow-sm transition">
+              💻 Bảng Sheet (Máy tính)
+            </button>
+            <button id="viewBtnCard" onclick="app.setMealView('card')" class="px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-cream-600 hover:text-cream-900 transition">
+              📱 Dạng Thẻ Ngày (Mobile)
+            </button>
+          </div>
+        </div>
+        <div class="text-xs sm:text-sm text-cream-600 italic hidden sm:block font-medium">
+          💡 Bạn có thể bấm <span class="text-warm-accent font-bold">[+ Thêm món]</span> dưới từng buổi để thêm nhiều món (cơm, nước, trà sữa...)
+        </div>
+      </div>
+
+      <!-- VIEW 1: TABLE VIEW (Hiển thị Bảng Sheet đầy đủ cột Thứ 2 -> CN) -->
+      <div id="mealTableView" class="bg-white rounded-2xl border border-warm-border shadow-cream-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left border-collapse min-w-[850px]">
+            <thead>
+              <tr class="bg-cream-200 text-cream-900 border-b border-cream-300" id="tableHeaderRow">
+                <th class="py-3 px-3 w-36 font-extrabold border-r border-cream-300 text-center uppercase tracking-wide text-xs">Buổi Ăn</th>
+              </tr>
+            </thead>
+            <tbody id="mealTableBody" class="divide-y divide-cream-200">
+              <!-- Dynamically rendered rows for Breakfast, Lunch, Dinner, Totals & Save -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VIEW 2: CARD VIEW (Tối ưu vuốt chạm cho điện thoại) -->
+      <div id="mealCardView" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <!-- Dynamically rendered cards for each day in week -->
+      </div>
+
+      <!-- Month Summary Bar for Meals -->
+      <div class="bg-gradient-to-r from-cream-100 via-white to-cream-50 rounded-2xl p-5 sm:p-6 border border-warm-border flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <span class="text-3xl">🏆</span>
+          <div>
+            <div class="font-extrabold text-cream-900 text-base sm:text-lg">TỔNG KẾT ĂN UỐNG CẢ THÁNG:</div>
+            <div class="text-cream-600 text-xs sm:text-sm">Tự động cộng dồn tất cả các tuần trong tháng đang chọn</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-right">
+            <div class="text-xs text-cream-500 font-semibold">Tổng thực chi ăn:</div>
+            <div id="monthMealTotalSpent" class="text-xl sm:text-2xl font-black text-warm-accent">0 đ</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-cream-500 font-semibold">Tiết kiệm được:</div>
+            <div id="monthMealTotalSave" class="text-xl sm:text-2xl font-black text-warm-sage">0 đ</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: BIỂU ĐỒ & THỐNG KÊ CHI TIẾT -->
+    <!-- ========================================== -->
+    <section id="tab-charts" class="hidden space-y-7">
+
+      <!-- Grid Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Chart 1: So sánh Hạn mức vs Thực tế 3 Nhóm -->
+        <div class="bg-white rounded-2xl border border-warm-border p-6 shadow-cream-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 class="font-extrabold text-cream-900 text-base">So Sánh Ngân Sách vs Thực Chi</h4>
+              <p class="text-xs text-cream-500">3 nhóm chi phí trong tháng</p>
+            </div>
+            <span class="text-xs bg-cream-100 text-cream-800 font-bold px-2.5 py-1 rounded-lg">VNĐ</span>
+          </div>
+          <div class="relative h-64">
+            <canvas id="budgetCompareBarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Chi tiêu ăn uống các ngày trong tuần -->
+        <div class="bg-white rounded-2xl border border-warm-border p-6 shadow-cream-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 class="font-extrabold text-cream-900 text-base">Chi Phí Ăn Uống Theo Ngày (Tuần Đang Xem)</h4>
+              <p class="text-xs text-cream-500">So sánh với mức trần mục tiêu 85k/ngày</p>
+            </div>
+            <span class="text-xs bg-cream-100 text-cream-800 font-bold px-2.5 py-1 rounded-lg">Hàng ngày</span>
+          </div>
+          <div class="relative h-64">
+            <canvas id="dailyMealLineChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Highlights & Food Habits -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-2xl border border-warm-border p-6 shadow-cream-sm">
+          <div class="text-xs uppercase tracking-wider font-extrabold text-cream-500 mb-1.5">Món Ăn Quen Thuộc</div>
+          <h5 id="topMealName" class="text-xl font-black text-cream-900">Chưa có</h5>
+          <p class="text-xs sm:text-sm text-cream-600 mt-1" id="topMealCount">Hãy nhập thêm món ăn</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-warm-border p-6 shadow-cream-sm">
+          <div class="text-xs uppercase tracking-wider font-extrabold text-cream-500 mb-1.5">Ngày Tiết Kiệm Nhất</div>
+          <h5 id="bestSaveDay" class="text-xl font-black text-warm-sage">Chưa có</h5>
+          <p class="text-xs sm:text-sm text-cream-600 mt-1">Chi ít nhất so với hạn mức</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-warm-border p-6 shadow-cream-sm">
+          <div class="text-xs uppercase tracking-wider font-extrabold text-cream-500 mb-1.5">Tỷ Lệ Tiết Kiệm Tổng Thể</div>
+          <h5 id="overallSavingsRate" class="text-xl font-black text-warm-accent">0%</h5>
+          <p class="text-xs sm:text-sm text-cream-600 mt-1">Số tiền chưa tiêu trong tổng quỹ</p>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ĐỔI TÊN NGƯỜI DÙNG / HỒ SƠ -->
+  <!-- ========================================== -->
+  <div id="modalUserProfile" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl border border-warm-border shadow-cream-lg p-6 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-cream-100">
+        <h3 class="font-extrabold text-cream-900 text-base flex items-center gap-2">
+          <span>👤</span> Đổi Tên Người Dùng
+        </h3>
+        <button onclick="app.closeModal('modalUserProfile')" class="text-cream-400 hover:text-cream-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">Tên của bạn hoặc người dùng:</label>
+          <input type="text" id="inputUserName" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="Ví dụ: Dat, Linh, Minh...">
+          <p class="text-xs text-cream-500 mt-1">Tên này sẽ hiển thị ở góc trên và tiêu đề ứng dụng.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-cream-100">
+        <button onclick="app.closeModal('modalUserProfile')" class="px-4 py-2 text-sm font-bold rounded-xl text-cream-700 hover:bg-cream-100 transition">
+          Hủy
+        </button>
+        <button onclick="app.saveUserProfile()" class="px-5 py-2 text-sm font-bold rounded-xl bg-warm-accent text-white hover:bg-warm-accentHover shadow-sm transition">
+          Lưu Tên
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CHỌN THÁNG & NĂM TÙY Ý (2025 - 2035+) -->
+  <!-- ========================================== -->
+  <div id="modalMonthPicker" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl border border-warm-border shadow-cream-lg p-6 space-y-5">
+      <div class="flex items-center justify-between pb-2 border-b border-cream-100">
+        <h3 class="font-extrabold text-cream-900 text-base flex items-center gap-2">
+          <span>📅</span> Chọn Tháng & Năm Quản Lý
+        </h3>
+        <button onclick="app.closeModal('modalMonthPicker')" class="text-cream-400 hover:text-cream-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">Tháng:</label>
+          <select id="selectMonthVal" class="w-full border border-warm-border rounded-xl p-2.5 text-base font-bold bg-white text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent">
+            <option value="1">Tháng 1</option>
+            <option value="2">Tháng 2</option>
+            <option value="3">Tháng 3</option>
+            <option value="4">Tháng 4</option>
+            <option value="5">Tháng 5</option>
+            <option value="6">Tháng 6</option>
+            <option value="7">Tháng 7</option>
+            <option value="8">Tháng 8</option>
+            <option value="9">Tháng 9</option>
+            <option value="10">Tháng 10</option>
+            <option value="11">Tháng 11</option>
+            <option value="12">Tháng 12</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">Năm:</label>
+          <select id="selectYearVal" class="w-full border border-warm-border rounded-xl p-2.5 text-base font-bold bg-white text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent">
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+            <option value="2031">2031</option>
+          </select>
+        </div>
+      </div>
+      <p class="text-xs text-cream-500 italic">* Hệ thống tự động tính số ngày và các tuần theo lịch thực tế của năm đó!</p>
+
+      <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-cream-100">
+        <button onclick="app.closeModal('modalMonthPicker')" class="px-4 py-2 text-sm font-bold rounded-xl text-cream-700 hover:bg-cream-100 transition">
+          Hủy
+        </button>
+        <button onclick="app.confirmMonthYearSelect()" class="px-5 py-2 text-sm font-bold rounded-xl bg-warm-accent text-white hover:bg-warm-accentHover shadow-sm transition">
+          Chuyển Tháng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ĐỒNG BỘ ĐÁM MÂY FIREBASE (REALTIME) -->
+  <!-- ========================================== -->
+  <div id="modalFirebase" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl border border-warm-border shadow-cream-lg p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🔥</span>
+          <div>
+            <h3 class="font-extrabold text-cream-900 text-lg">Đồng Bộ Đám Mây Firebase</h3>
+            <p class="text-xs text-cream-500">Google Cloud Realtime Database (Tự động 100%, Miễn phí)</p>
+          </div>
+        </div>
+        <button onclick="app.closeModal('modalFirebase')" class="text-cream-400 hover:text-cream-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        
+        <!-- Status indicator banner -->
+        <div id="firebaseConnectionBanner" class="p-3.5 bg-cream-100 rounded-xl border border-cream-200 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span id="bannerStatusDot" class="w-3 h-3 rounded-full bg-cream-400"></span>
+            <span id="bannerStatusLabel" class="font-bold text-cream-800 text-xs sm:text-sm">Trạng thái: Chưa kết nối Firebase</span>
+          </div>
+          <button onclick="app.disconnectFirebase()" id="btnDisconnectFirebase" class="hidden text-xs text-warm-rose hover:underline font-bold">
+            Ngắt kết nối
+          </button>
+        </div>
+
+        <!-- Firebase Config Input -->
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">
+            Dán cấu hình Firebase (Firebase Config):
+          </label>
+          <textarea id="inputFirebaseConfig" rows="6" placeholder='Dán đoạn mã firebaseConfig từ Firebase Console vào đây:
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  databaseURL: "https://your-app-default-rtdb.firebaseio.com",
+  projectId: "your-app",
+  ...
+};' class="w-full border border-warm-border rounded-xl p-3 text-xs font-mono text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent bg-cream-50/50"></textarea>
+          <p class="text-[11px] text-cream-500 mt-1">Hệ thống sẽ tự động trích xuất các thông số kết nối từ đoạn mã bạn dán.</p>
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="app.connectFirebase()" class="w-full px-4 py-2.5 bg-warm-accent hover:bg-warm-accentHover text-white font-bold rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+            <span>⚡ Kết Nối & Đồng Bộ Ngay</span>
+          </button>
+        </div>
+
+
+
+      </div>
+
+      <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-cream-100">
+        <button onclick="app.closeModal('modalFirebase')" class="px-5 py-2 text-sm font-bold rounded-xl bg-cream-200 text-cream-800 hover:bg-cream-300 transition">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CÀI ĐẶT HẠN MỨC 3 NHÓM -->
+  <!-- ========================================== -->
+  <div id="modalSettings" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl border border-warm-border shadow-cream-lg p-6 space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <h3 class="font-extrabold text-cream-900 text-lg flex items-center gap-2">
+          <span>⚙️</span> Cài Đặt Hạn Mức Chi Tiêu Tháng
+        </h3>
+        <button onclick="app.closeModal('modalSettings')" class="text-cream-400 hover:text-cream-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">1. Hạn mức Tiền Cố Định (đ/tháng):</label>
+          <input type="number" id="inputBudgetFixed" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="1000000">
+          <p class="text-xs text-cream-500 mt-1">Dành cho: Thẻ xe, wifi, 4g, điện nước, gym, xăng...</p>
+        </div>
+
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">2. Hạn mức Tiền Ăn Uống (đ/tháng):</label>
+          <input type="number" id="inputBudgetMeals" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="1000000">
+          <p class="text-xs text-cream-500 mt-1">Mục tiêu ăn uống chung trong tháng</p>
+        </div>
+
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">3. Hạn mức Tiền Linh Hoạt (đ/tháng):</label>
+          <input type="number" id="inputBudgetFlexible" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="500000">
+          <p class="text-xs text-cream-500 mt-1">Dành cho: Mua phụ phẩm, bàn chải, ăn vặt, đi chơi...</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-3 pt-3 border-t border-cream-100">
+        <button onclick="app.closeModal('modalSettings')" class="px-4 py-2 text-sm font-bold rounded-xl text-cream-700 hover:bg-cream-100 transition">
+          Hủy
+        </button>
+        <button onclick="app.saveBudgets()" class="px-5 py-2.5 text-sm font-bold rounded-xl bg-warm-accent text-white hover:bg-warm-accentHover shadow-sm transition">
+          Lưu Hạn Mức
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CÀI ĐẶT HẠN MỨC ĂN UỐNG HÀNG NGÀY -->
+  <!-- ========================================== -->
+  <div id="modalMealTarget" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl border border-warm-border shadow-cream-lg p-6 space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <h3 class="font-extrabold text-cream-900 text-lg flex items-center gap-2">
+          <span>🍲</span> Hạn Mức Ăn Uống Hàng Ngày
+        </h3>
+        <button onclick="app.closeModal('modalMealTarget')" class="text-cream-400 hover:text-cream-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">Bữa Sáng (nghìn đồng):</label>
+          <input type="number" id="inputTargetBf" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="25">
+          <p class="text-xs text-cream-500 mt-1">Mặc định: 25k</p>
+        </div>
+
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">Bữa Trưa (nghìn đồng):</label>
+          <input type="number" id="inputTargetLn" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="30">
+          <p class="text-xs text-cream-500 mt-1">Mặc định: 30k</p>
+        </div>
+
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">Bữa Tối (nghìn đồng):</label>
+          <input type="number" id="inputTargetDn" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="30">
+          <p class="text-xs text-cream-500 mt-1">Mặc định: 30k</p>
+        </div>
+
+        <div class="p-3.5 bg-cream-100 rounded-xl text-cream-800 text-sm font-medium">
+          Tổng ngân sách ăn mỗi ngày: <strong id="previewDailySum" class="text-warm-accent font-black text-base">85k</strong>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-3 pt-3 border-t border-cream-100">
+        <button onclick="app.closeModal('modalMealTarget')" class="px-4 py-2 text-sm font-bold rounded-xl text-cream-700 hover:bg-cream-100 transition">
+          Hủy
+        </button>
+        <button onclick="app.saveMealTarget()" class="px-5 py-2.5 text-sm font-bold rounded-xl bg-warm-accent text-white hover:bg-warm-accentHover shadow-sm transition">
+          Cập Nhật
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: THÊM KHOẢN CHI (POPUP DỰ PHÒNG) -->
+  <!-- ========================================== -->
+  <div id="modalAddExpense" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl border border-warm-border shadow-cream-lg p-6 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-cream-100">
+        <h3 id="addExpenseModalTitle" class="font-extrabold text-cream-900 text-base">Thêm Khoản Chi Mới</h3>
+        <button onclick="app.closeModal('modalAddExpense')" class="text-cream-400 hover:text-cream-700 font-bold text-lg">✕</button>
+      </div>
+
+      <input type="hidden" id="addExpenseCategory">
+
+      <div class="space-y-3.5 text-sm">
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">Tên khoản chi:</label>
+          <input type="text" id="addExpenseName" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="Ví dụ: Tiền điện nước...">
+        </div>
+        <div>
+          <label class="block font-bold text-cream-800 mb-1">Số tiền (nghìn đồng hoặc VNĐ):</label>
+          <input type="number" id="addExpenseAmount" class="w-full border border-warm-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-cream-900 focus:outline-none focus:ring-2 focus:ring-warm-accent" placeholder="Nhập 76 hoặc 76000">
+          <p class="text-xs text-cream-500 mt-1">Nhập số nghìn (vd 76) hoặc đủ 76000 đều được</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-cream-100">
+        <button onclick="app.closeModal('modalAddExpense')" class="px-4 py-2 text-sm font-bold rounded-xl text-cream-700 hover:bg-cream-100 transition">
+          Hủy
+        </button>
+        <button onclick="app.confirmAddExpense()" class="px-4 py-2 text-sm font-bold rounded-xl bg-warm-accent text-white hover:bg-warm-accentHover shadow-sm transition">
+          Thêm Khoản
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: SAO LƯU & KHÔI PHỤC DỮ LIỆU -->
+  <!-- ========================================== -->
+  <div id="modalData" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl border border-warm-border shadow-cream-lg p-6 space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <h3 class="font-extrabold text-cream-900 text-lg flex items-center gap-2">
+          <span>💾</span> Sao Lưu & Khôi Phục Dữ Liệu
+        </h3>
+        <button onclick="app.closeModal('modalData')" class="text-cream-400 hover:text-cream-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <div class="p-3.5 bg-cream-100 rounded-xl text-cream-800 space-y-1">
+          <div class="font-bold text-cream-900">Trạng thái lưu trữ:</div>
+          <div>Dữ liệu tự động lưu ngay trong trình duyệt (LocalStorage). Khi kết nối Firebase, dữ liệu sẽ tự động đồng bộ trên đám mây giữa điện thoại và máy tính.</div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="font-bold text-cream-800">1. Xuất file sao lưu (Backup JSON):</div>
+          <button onclick="app.exportDataJSON()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-cream-200 hover:bg-cream-300 text-cream-900 font-bold rounded-xl transition">
+            <span>📥 Tải File Dữ Liệu Về Máy (.json)</span>
+          </button>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-cream-100">
+          <div class="font-bold text-cream-800">2. Nhập file khôi phục (Restore):</div>
+          <input type="file" id="importFileInput" accept=".json" onchange="app.importDataJSON(event)" class="block w-full text-xs text-cream-600 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-warm-accent file:text-white hover:file:bg-warm-accentHover cursor-pointer">
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-cream-100">
+          <div class="font-bold text-cream-800">3. Khôi phục dữ liệu ban đầu:</div>
+          <button onclick="app.resetToTemplate()" class="w-full px-4 py-2.5 text-xs font-bold text-warm-rose bg-warm-roseLight hover:bg-rose-100 rounded-xl transition">
+            🔄 Đặt lại dữ liệu gốc ban đầu
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button onclick="app.closeModal('modalData')" class="px-5 py-2 text-sm font-bold rounded-xl bg-cream-200 text-cream-800 hover:bg-cream-300 transition">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-cream-900 text-cream-50 px-5 py-3 rounded-2xl shadow-cream-lg text-sm font-semibold transform translate-y-16 opacity-0 transition-all duration-300 flex items-center gap-2.5">
+    <span id="toastIcon">✅</span>
+    <span id="toastMessage">Đã lưu thay đổi!</span>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    /**
+     * MONEY MANAGEMENT - FIREBASE REALTIME CLOUD SYNC V4
+     */
+    function generateMonthWeeks(month, year) {
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const weeks = [];
+      let currentDay = 1;
+      let weekNumber = 1;
+
+      while (currentDay <= daysInMonth) {
+        const weekDays = [];
+        const startDay = currentDay;
+        
+        for (let i = 0; i < 7; i++) {
+          const dateObj = new Date(year, month - 1, currentDay);
+          const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+          
+          weekDays.push({
+            dayName: dayNames[i],
+            dayNumber: currentDay <= daysInMonth ? currentDay : ((currentDay - daysInMonth)),
+            isCurrentMonth: currentDay <= daysInMonth,
+            breakfast: [{ meal: "", price: 0 }],
+            lunch: [{ meal: "", price: 0 }],
+            dinner: [{ meal: "", price: 0 }]
+          });
+          currentDay++;
+          if (currentDay > daysInMonth && i === 6) break;
+        }
+
+        const endDay = Math.min(currentDay - 1, daysInMonth);
+        weeks.push({
+          weekNumber: weekNumber++,
+          startDay: startDay,
+          endDay: endDay,
+          days: weekDays
+        });
+
+        if (currentDay > daysInMonth) break;
+      }
+      return weeks;
+    }
+
+    const DEFAULT_TEMPLATE_DATA = {
+      version: 4,
+      userName: "Dat",
+      currentMonthKey: "11/2026",
+      firebaseConfigRaw: "",
+      defaultBudgets: { fixed: 1000000, meals: 1000000, flexible: 500000 },
+      defaultMealTargets: { breakfast: 25, lunch: 30, dinner: 30 },
+      months: {
+        "11/2026": {
+          budgets: { fixed: 1000000, meals: 1000000, flexible: 500000 },
+          mealTargets: { breakfast: 25, lunch: 30, dinner: 30 },
+          fixedExpenses: [
+            { id: 1, name: "Thẻ xe tháng", amount: 50000 },
+            { id: 2, name: "Thẻ wifi", amount: 50000 },
+            { id: 3, name: "Điện thoại + 4g", amount: 125000 },
+            { id: 4, name: "Tiền điện nước", amount: 76000 },
+            { id: 5, name: "Thẻ gym", amount: 260000 },
+            { id: 6, name: "Xăng", amount: 50000 },
+            { id: 7, name: "Tiền gửi xe", amount: 60000 }
+          ],
+          flexibleExpenses: [
+            { id: 1, name: "Cơ sở 1", amount: 60000 },
+            { id: 2, name: "Long mượn", amount: 20000 },
+            { id: 3, name: "quishy", amount: 110000 },
+            { id: 4, name: "Bàn chải đánh răng", amount: 89000 }
+          ],
+          weeks: [
+            {
+              weekNumber: 1, startDay: 2, endDay: 8,
+              days: [
+                { dayName: "MON", dayNumber: 2, breakfast: [{ meal: "Bánh mi", price: 20 }], lunch: [{ meal: "Cơm d5", price: 27 }], dinner: [{ meal: "Lẩu che", price: 40 }] },
+                { dayName: "TUE", dayNumber: 3, breakfast: [{ meal: "Bánh mi", price: 15 }], lunch: [{ meal: "Cơm gà", price: 30 }], dinner: [{ meal: "Cơm gà", price: 30 }] },
+                { dayName: "WED", dayNumber: 4, breakfast: [{ meal: "Xôi", price: 20 }], lunch: [{ meal: "Cơm d5", price: 27 }], dinner: [{ meal: "Cơm d5", price: 27 }] },
+                { dayName: "THU", dayNumber: 5, breakfast: [{ meal: "", price: 0 }], lunch: [{ meal: "", price: 0 }], dinner: [{ meal: "", price: 0 }] },
+                { dayName: "FRI", dayNumber: 6, breakfast: [{ meal: "", price: 0 }], lunch: [{ meal: "", price: 0 }], dinner: [{ meal: "", price: 0 }] },
+                { dayName: "SAT", dayNumber: 7, breakfast: [{ meal: "", price: 0 }], lunch: [{ meal: "", price: 0 }], dinner: [{ meal: "", price: 0 }] },
+                { dayName: "SUN", dayNumber: 8, breakfast: [{ meal: "", price: 0 }], lunch: [{ meal: "", price: 0 }], dinner: [{ meal: "", price: 0 }] }
+              ]
+            },
+            {
+              weekNumber: 2, startDay: 9, endDay: 15,
+              days: [
+                { dayName: "MON", dayNumber: 9, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "TUE", dayNumber: 10, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "WED", dayNumber: 11, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "THU", dayNumber: 12, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "FRI", dayNumber: 13, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "SAT", dayNumber: 14, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "SUN", dayNumber: 15, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] }
+              ]
+            },
+            {
+              weekNumber: 3, startDay: 16, endDay: 22,
+              days: [
+                { dayName: "MON", dayNumber: 16, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "TUE", dayNumber: 17, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "WED", dayNumber: 18, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "THU", dayNumber: 19, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "FRI", dayNumber: 20, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "SAT", dayNumber: 21, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "SUN", dayNumber: 22, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] }
+              ]
+            },
+            {
+              weekNumber: 4, startDay: 23, endDay: 29,
+              days: [
+                { dayName: "MON", dayNumber: 23, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "TUE", dayNumber: 24, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "WED", dayNumber: 25, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "THU", dayNumber: 26, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "FRI", dayNumber: 27, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "SAT", dayNumber: 28, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "SUN", dayNumber: 29, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}] ,dinner: [{meal:"", price:0}] }
+              ]
+            },
+            {
+              weekNumber: 5, startDay: 30, endDay: 4,
+              days: [
+                { dayName: "MON", dayNumber: 30, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "TUE", dayNumber: 1, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "WED", dayNumber: 2, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "THU", dayNumber: 3, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "FRI", dayNumber: 4, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "SAT", dayNumber: 5, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] },
+                { dayName: "SUN", dayNumber: 6, breakfast: [{meal:"", price:0}], lunch: [{meal:"", price:0}], dinner: [{meal:"", price:0}] }
+              ]
+            }
+          ]
+        }
+      }
+    };
+
+    class ExpenseApp {
+      constructor() {
+        this.STORAGE_KEY = 'DAT_MONEY_MANAGEMENT_APP_V4';
+        this.currentTab = 'general';
+        this.currentWeekIndex = 0;
+        this.mealViewMode = 'table';
+        this.donutChart = null;
+        this.compareBarChart = null;
+        this.mealLineChart = null;
+        this.firebaseApp = null;
+        this.firebaseDb = null;
+        this.isSyncingFromRemote = false;
+        this.loadData();
+      }
+
+      loadData() {
+        try {
+          const stored = localStorage.getItem(this.STORAGE_KEY) 
+                      || localStorage.getItem('DAT_MONEY_MANAGEMENT_APP_V3')
+                      || localStorage.getItem('DAT_MONEY_MANAGEMENT_APP_V2')
+                      || localStorage.getItem('DAT_MONEY_MANAGEMENT_APP_V1');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.months) {
+              this.data = parsed;
+            } else {
+              this.data = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE_DATA));
+              if (parsed.budgets) this.data.months["11/2026"].budgets = parsed.budgets;
+              if (parsed.mealTargets) this.data.months["11/2026"].mealTargets = parsed.mealTargets;
+              if (parsed.fixedExpenses) this.data.months["11/2026"].fixedExpenses = parsed.fixedExpenses;
+              if (parsed.flexibleExpenses) this.data.months["11/2026"].flexibleExpenses = parsed.flexibleExpenses;
+              if (parsed.weeks) this.data.months["11/2026"].weeks = parsed.weeks;
+            }
+          } else {
+            this.data = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE_DATA));
+            this.saveData(false, false);
+          }
+        } catch (e) {
+          console.error("Error loading local storage data:", e);
+          this.data = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE_DATA));
+        }
+
+        this.ensureCurrentMonthExists();
+      }
+
+      ensureCurrentMonthExists() {
+        const monthKey = this.data.currentMonthKey || "11/2026";
+        if (!this.data.months[monthKey]) {
+          const [mStr, yStr] = monthKey.split('/');
+          const m = parseInt(mStr);
+          const y = parseInt(yStr);
+          this.data.months[monthKey] = {
+            budgets: JSON.parse(JSON.stringify(this.data.defaultBudgets || { fixed: 1000000, meals: 1000000, flexible: 500000 })),
+            mealTargets: JSON.parse(JSON.stringify(this.data.defaultMealTargets || { breakfast: 25, lunch: 30, dinner: 30 })),
+            fixedExpenses: [
+              { id: 1, name: "Thẻ xe tháng", amount: 50000 },
+              { id: 2, name: "Thẻ wifi", amount: 50000 },
+              { id: 3, name: "Điện thoại + 4g", amount: 125000 },
+              { id: 4, name: "Tiền điện nước", amount: 76000 },
+              { id: 5, name: "Thẻ gym", amount: 260000 },
+              { id: 6, name: "Xăng", amount: 50000 },
+              { id: 7, name: "Tiền gửi xe", amount: 60000 }
+            ],
+            flexibleExpenses: [],
+            weeks: generateMonthWeeks(m, y)
+          };
+        }
+      }
+
+      getCurrentMonthData() {
+        this.ensureCurrentMonthExists();
+        return this.data.months[this.data.currentMonthKey];
+      }
+
+      saveData(showToast = true, pushToFirebase = true) {
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+          if (showToast) {
+            this.showToast('✅ Đã lưu thay đổi!');
+          }
+          if (pushToFirebase && !this.isSyncingFromRemote) {
+            this.pushDataToFirebase();
+          }
+        } catch (e) {
+          console.error("Error saving data:", e);
+        }
+      }
+
+      init() {
+        this.renderAll();
+        // Init Firebase if config saved
+        if (this.data.firebaseConfigRaw) {
+          this.initFirebase(this.data.firebaseConfigRaw, false);
+        } else {
+          this.updateFirebaseStatusUI(false);
+        }
+
+        ['inputTargetBf', 'inputTargetLn', 'inputTargetDn'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('input', () => {
+              const b = parseFloat(document.getElementById('inputTargetBf').value) || 0;
+              const l = parseFloat(document.getElementById('inputTargetLn').value) || 0;
+              const d = parseFloat(document.getElementById('inputTargetDn').value) || 0;
+              document.getElementById('previewDailySum').textContent = (b + l + d) + 'k';
+            });
+          }
+        });
+      }
+
+      renderAll() {
+        const uName = this.data.userName || "Dat";
+        document.getElementById('headerUserName').textContent = uName;
+        document.getElementById('bannerUserBadge').textContent = 'Hồ sơ: ' + uName;
+        document.getElementById('displayCurrentMonth').textContent = this.data.currentMonthKey;
+        document.getElementById('bannerMonthBadge').textContent = 'Tháng ' + this.data.currentMonthKey;
+
+        this.renderGeneralOverview();
+        this.renderExpenseTables();
+        this.renderMealSection();
+        this.renderCharts();
+      }
+
+      switchTab(tabId) {
+        this.currentTab = tabId;
+        const tabs = ['general', 'meals', 'charts'];
+        tabs.forEach(t => {
+          const btn = document.getElementById(`tabBtn-${t}`);
+          const section = document.getElementById(`tab-${t}`);
+          if (t === tabId) {
+            btn.className = "tab-btn active px-4 py-2 rounded-xl bg-warm-accent text-white flex items-center gap-2 whitespace-nowrap shadow-sm transition";
+            section.classList.remove('hidden');
+          } else {
+            btn.className = "tab-btn px-4 py-2 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center gap-2 whitespace-nowrap transition";
+            section.classList.add('hidden');
+          }
+        });
+
+        if (tabId === 'charts' || tabId === 'general') {
+          setTimeout(() => this.renderCharts(), 50);
+        }
+      }
+
+      // ===================================
+      // FIREBASE REALTIME CLOUD INTEGRATION
+      // ===================================
+      openFirebaseModal() {
+        document.getElementById('inputFirebaseConfig').value = this.data.firebaseConfigRaw || '';
+        this.openModal('modalFirebase');
+      }
+
+      parseFirebaseConfig(rawText) {
+        if (!rawText) return null;
+        try {
+          // If pure JSON
+          return JSON.parse(rawText);
+        } catch (e) {
+          // Extract key-value pairs from JS snippet
+          const config = {};
+          const keys = ['apiKey', 'authDomain', 'databaseURL', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
+          keys.forEach(k => {
+            const regex = new RegExp(`["']?${k}["']?\\s*:\\s*["']([^"']+)["']`, 'i');
+            const match = rawText.match(regex);
+            if (match && match[1]) {
+              config[k] = match[1];
+            }
+          });
+          if (config.apiKey || config.databaseURL || config.projectId) {
+            return config;
+          }
+        }
+        return null;
+      }
+
+      initFirebase(rawConfig, showAlert = true) {
+        const config = this.parseFirebaseConfig(rawConfig);
+        if (!config) {
+          if (showAlert) alert("Không nhận diện được cấu hình Firebase. Vui lòng dán đoạn mã firebaseConfig đầy đủ từ Firebase Console.");
+          return false;
+        }
+
+        try {
+          if (window.firebase) {
+            if (!firebase.apps.length) {
+              this.firebaseApp = firebase.initializeApp(config);
+            } else {
+              this.firebaseApp = firebase.app();
+            }
+            this.firebaseDb = firebase.database();
+            this.data.firebaseConfigRaw = rawConfig;
+            this.saveData(false, false);
+            this.setupFirebaseListener();
+            this.updateFirebaseStatusUI(true);
+            if (showAlert) {
+              this.showToast('🔥 Kết nối Firebase Realtime thành công!');
+              this.closeModal('modalFirebase');
+            }
+            return true;
+          } else {
+            if (showAlert) alert("Không thể tải thư viện Firebase. Vui lòng kiểm tra kết nối mạng.");
+            return false;
+          }
+        } catch (err) {
+          console.error("Firebase init error:", err);
+          if (showAlert) alert("Lỗi kết nối Firebase: " + err.message);
+          this.updateFirebaseStatusUI(false);
+          return false;
+        }
+      }
+
+      setupFirebaseListener() {
+        if (!this.firebaseDb) return;
+        const userNode = (this.data.userName || 'Dat').replace(/[.#$\[\]]/g, '_');
+        const dbRef = this.firebaseDb.ref('money_app/' + userNode);
+
+        // Listen for real-time changes
+        dbRef.on('value', (snapshot) => {
+          const val = snapshot.val();
+          if (val && val.months) {
+            this.isSyncingFromRemote = true;
+            this.data = val;
+            this.saveData(false, false);
+            this.renderAll();
+            this.isSyncingFromRemote = false;
+          }
+        });
+      }
+
+      pushDataToFirebase() {
+        if (!this.firebaseDb) return;
+        try {
+          const userNode = (this.data.userName || 'Dat').replace(/[.#$\[\]]/g, '_');
+          this.firebaseDb.ref('money_app/' + userNode).set(this.data);
+        } catch (e) {
+          console.error("Error pushing to Firebase:", e);
+        }
+      }
+
+      connectFirebase() {
+        const raw = document.getElementById('inputFirebaseConfig').value.trim();
+        this.initFirebase(raw, true);
+      }
+
+      disconnectFirebase() {
+        if (confirm("Bạn có chắc muốn ngắt kết nối Firebase? Dữ liệu sẽ tiếp tục được lưu trong trình duyệt máy.")) {
+          this.data.firebaseConfigRaw = "";
+          this.firebaseDb = null;
+          this.updateFirebaseStatusUI(false);
+          this.saveData(true, false);
+        }
+      }
+
+      updateFirebaseStatusUI(connected) {
+        const ind = document.getElementById('firebaseIndicator');
+        const txt = document.getElementById('firebaseStatusText');
+        const bannerDot = document.getElementById('bannerStatusDot');
+        const bannerLabel = document.getElementById('bannerStatusLabel');
+        const btnDisconnect = document.getElementById('btnDisconnectFirebase');
+
+        if (connected) {
+          if (ind) ind.className = "w-2.5 h-2.5 rounded-full bg-warm-sage pulse-dot";
+          if (txt) txt.textContent = "Cloud Realtime";
+          if (bannerDot) bannerDot.className = "w-3 h-3 rounded-full bg-warm-sage pulse-dot";
+          if (bannerLabel) bannerLabel.textContent = "Trạng thái: Đang kết nối Firebase Realtime (Đồng bộ tức thì)";
+          if (btnDisconnect) btnDisconnect.classList.remove('hidden');
+        } else {
+          if (ind) ind.className = "w-2.5 h-2.5 rounded-full bg-cream-400";
+          if (txt) txt.textContent = "Bộ nhớ máy";
+          if (bannerDot) bannerDot.className = "w-3 h-3 rounded-full bg-cream-400";
+          if (bannerLabel) bannerLabel.textContent = "Trạng thái: Chưa kết nối Firebase (Đang lưu offline trên máy)";
+          if (btnDisconnect) btnDisconnect.classList.add('hidden');
+        }
+      }
+
+      // ===================================
+      // MONTH & YEAR SWITCHING
+      // ===================================
+      prevMonth() {
+        const [mStr, yStr] = this.data.currentMonthKey.split('/');
+        let m = parseInt(mStr);
+        let y = parseInt(yStr);
+        m--;
+        if (m < 1) { m = 12; y--; }
+        this.switchMonthYear(m, y);
+      }
+
+      nextMonth() {
+        const [mStr, yStr] = this.data.currentMonthKey.split('/');
+        let m = parseInt(mStr);
+        let y = parseInt(yStr);
+        m++;
+        if (m > 12) { m = 1; y++; }
+        this.switchMonthYear(m, y);
+      }
+
+      openMonthPickerModal() {
+        const [mStr, yStr] = this.data.currentMonthKey.split('/');
+        document.getElementById('selectMonthVal').value = parseInt(mStr);
+        document.getElementById('selectYearVal').value = parseInt(yStr);
+        this.openModal('modalMonthPicker');
+      }
+
+      confirmMonthYearSelect() {
+        const m = parseInt(document.getElementById('selectMonthVal').value);
+        const y = parseInt(document.getElementById('selectYearVal').value);
+        this.closeModal('modalMonthPicker');
+        this.switchMonthYear(m, y);
+      }
+
+      switchMonthYear(m, y) {
+        const monthKey = `${m < 10 ? '0' + m : m}/${y}`;
+        this.data.currentMonthKey = monthKey;
+        this.ensureCurrentMonthExists();
+        this.currentWeekIndex = 0;
+        this.saveData(false);
+        this.renderAll();
+        this.showToast(`📅 Đã chuyển sang Tháng ${monthKey}`);
+      }
+
+      // ===================================
+      // USER PROFILE
+      // ===================================
+      openUserProfileModal() {
+        document.getElementById('inputUserName').value = this.data.userName || "Dat";
+        this.openModal('modalUserProfile');
+      }
+
+      saveUserProfile() {
+        const name = document.getElementById('inputUserName').value.trim();
+        if (name) {
+          this.data.userName = name;
+          this.closeModal('modalUserProfile');
+          this.saveData(true);
+          this.renderAll();
+          if (this.firebaseDb) {
+            this.setupFirebaseListener();
+          }
+        }
+      }
+
+      // ===================================
+      // OVERVIEW CALCULATIONS
+      // ===================================
+      getFixedSpent() {
+        const mData = this.getCurrentMonthData();
+        return (mData.fixedExpenses || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+      }
+
+      getFlexibleSpent() {
+        const mData = this.getCurrentMonthData();
+        return (mData.flexibleExpenses || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+      }
+
+      getMealsSpent() {
+        const mData = this.getCurrentMonthData();
+        let totalThousand = 0;
+        (mData.weeks || []).forEach(w => {
+          (w.days || []).forEach(d => {
+            ['breakfast', 'lunch', 'dinner'].forEach(mealTime => {
+              (d[mealTime] || []).forEach(item => {
+                totalThousand += (Number(item.price) || 0);
+              });
+            });
+          });
+        });
+        return totalThousand * 1000;
+      }
+
+      renderGeneralOverview() {
+        const mData = this.getCurrentMonthData();
+        const fixedSpent = this.getFixedSpent();
+        const flexibleSpent = this.getFlexibleSpent();
+        const mealsSpent = this.getMealsSpent();
+
+        const fixedBudget = Number(mData.budgets.fixed) || 1;
+        const mealsBudget = Number(mData.budgets.meals) || 1;
+        const flexibleBudget = Number(mData.budgets.flexible) || 1;
+
+        const totalSpent = fixedSpent + flexibleSpent + mealsSpent;
+        const totalBudget = fixedBudget + mealsBudget + flexibleBudget;
+        const totalRemaining = totalBudget - totalSpent;
+
+        document.getElementById('statTotalSpent').textContent = this.formatCurrency(totalSpent);
+        document.getElementById('statTotalBudget').textContent = this.formatCurrency(totalBudget);
+        document.getElementById('statTotalRemaining').textContent = this.formatCurrency(totalRemaining);
+        
+        const percent = Math.min(Math.round((totalSpent / totalBudget) * 100), 100);
+        document.getElementById('statSpentPercent').textContent = percent + '%';
+        const pBar = document.getElementById('statProgressBar');
+        pBar.style.width = percent + '%';
+        if (totalSpent > totalBudget) {
+          pBar.className = "h-full bg-warm-rose rounded-full transition-all duration-500";
+          document.getElementById('statOverbudgetWarning').classList.remove('hidden');
+        } else {
+          pBar.className = "h-full bg-warm-accent rounded-full transition-all duration-500";
+          document.getElementById('statOverbudgetWarning').classList.add('hidden');
+        }
+
+        document.getElementById('fixedSpent').textContent = this.formatCurrency(fixedSpent);
+        document.getElementById('fixedBudget').textContent = this.formatCurrency(fixedBudget);
+        document.getElementById('fixedRemaining').textContent = this.formatCurrency(fixedBudget - fixedSpent);
+        document.getElementById('fixedProgress').style.width = Math.min(Math.round((fixedSpent / fixedBudget) * 100), 100) + '%';
+        document.getElementById('fixedItemCount').textContent = `${(mData.fixedExpenses || []).length} khoản chi`;
+        document.getElementById('fixedTableTotal').textContent = this.formatCurrency(fixedSpent);
+
+        document.getElementById('mealsSpent').textContent = this.formatCurrency(mealsSpent);
+        document.getElementById('mealsBudget').textContent = this.formatCurrency(mealsBudget);
+        document.getElementById('mealsRemaining').textContent = this.formatCurrency(mealsBudget - mealsSpent);
+        document.getElementById('mealsProgress').style.width = Math.min(Math.round((mealsSpent / mealsBudget) * 100), 100) + '%';
+
+        document.getElementById('flexibleSpent').textContent = this.formatCurrency(flexibleSpent);
+        document.getElementById('flexibleBudget').textContent = this.formatCurrency(flexibleBudget);
+        document.getElementById('flexibleRemaining').textContent = this.formatCurrency(flexibleBudget - flexibleSpent);
+        document.getElementById('flexibleProgress').style.width = Math.min(Math.round((flexibleSpent / flexibleBudget) * 100), 100) + '%';
+        document.getElementById('flexibleItemCount').textContent = `${(mData.flexibleExpenses || []).length} khoản chi`;
+        document.getElementById('flexibleTableTotal').textContent = this.formatCurrency(flexibleSpent);
+
+        document.getElementById('monthMealTotalSpent').textContent = this.formatCurrency(mealsSpent);
+        const monthlyMealTarget = (mData.mealTargets.breakfast + mData.mealTargets.lunch + mData.mealTargets.dinner) * 30 * 1000;
+        document.getElementById('monthMealTotalSave').textContent = this.formatCurrency(Math.max(monthlyMealTarget - mealsSpent, 0));
+      }
+
+      renderExpenseTables() {
+        const mData = this.getCurrentMonthData();
+
+        // Fixed
+        const fixedTbody = document.getElementById('fixedExpenseList');
+        fixedTbody.innerHTML = (mData.fixedExpenses || []).map((item, idx) => `
+          <tr class="hover:bg-cream-50 transition">
+            <td class="py-2 px-2.5">
+              <input type="text" value="${this.escapeHtml(item.name)}" 
+                onchange="app.updateExpenseItem('fixed', ${idx}, 'name', this.value)" 
+                class="table-cell-input text-cream-900 font-semibold text-sm">
+            </td>
+            <td class="py-2 px-2.5 text-right">
+              <input type="number" value="${Math.round(item.amount / 1000)}" 
+                onchange="app.updateExpenseItem('fixed', ${idx}, 'amount', Number(this.value)*1000)" 
+                class="table-cell-input text-right text-cream-900 font-bold text-sm w-20">
+            </td>
+            <td class="py-2 px-1 text-center">
+              <button onclick="app.deleteExpenseItem('fixed', ${idx})" class="text-cream-400 hover:text-warm-rose text-base font-bold transition p-1" title="Xóa">
+                ✕
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        // Flexible
+        const flexTbody = document.getElementById('flexibleExpenseList');
+        flexTbody.innerHTML = (mData.flexibleExpenses || []).map((item, idx) => `
+          <tr class="hover:bg-cream-50 transition">
+            <td class="py-2 px-2.5">
+              <input type="text" value="${this.escapeHtml(item.name)}" 
+                onchange="app.updateExpenseItem('flexible', ${idx}, 'name', this.value)" 
+                class="table-cell-input text-cream-900 font-semibold text-sm">
+            </td>
+            <td class="py-2 px-2.5 text-right">
+              <input type="number" value="${Math.round(item.amount / 1000)}" 
+                onchange="app.updateExpenseItem('flexible', ${idx}, 'amount', Number(this.value)*1000)" 
+                class="table-cell-input text-right text-cream-900 font-bold text-sm w-20">
+            </td>
+            <td class="py-2 px-1 text-center">
+              <button onclick="app.deleteExpenseItem('flexible', ${idx})" class="text-cream-400 hover:text-warm-rose text-base font-bold transition p-1" title="Xóa">
+                ✕
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      quickAddInlineExpense(category) {
+        const mData = this.getCurrentMonthData();
+        const nameInput = document.getElementById(`inlineAddName-${category}`);
+        const amountInput = document.getElementById(`inlineAddAmount-${category}`);
+        const name = (nameInput.value || '').trim();
+        let amount = parseFloat(amountInput.value) || 0;
+
+        if (!name) { nameInput.focus(); return; }
+        if (amount > 0 && amount < 1000) amount = amount * 1000;
+
+        const list = category === 'fixed' ? mData.fixedExpenses : mData.flexibleExpenses;
+        list.push({ id: Date.now(), name, amount });
+
+        nameInput.value = '';
+        amountInput.value = '';
+        nameInput.focus();
+
+        this.saveData(true);
+        this.renderExpenseTables();
+        this.renderGeneralOverview();
+        this.renderCharts();
+      }
+
+      updateExpenseItem(category, index, field, value) {
+        const mData = this.getCurrentMonthData();
+        const list = category === 'fixed' ? mData.fixedExpenses : mData.flexibleExpenses;
+        if (list && list[index]) {
+          list[index][field] = value;
+          this.saveData(true);
+          this.renderGeneralOverview();
+          this.renderCharts();
+        }
+      }
+
+      deleteExpenseItem(category, index) {
+        if (confirm("Bạn có chắc muốn xóa khoản chi này?")) {
+          const mData = this.getCurrentMonthData();
+          const list = category === 'fixed' ? mData.fixedExpenses : mData.flexibleExpenses;
+          list.splice(index, 1);
+          this.saveData(true);
+          this.renderExpenseTables();
+          this.renderGeneralOverview();
+          this.renderCharts();
+        }
+      }
+
+      addExpenseModal(category) {
+        document.getElementById('addExpenseCategory').value = category;
+        document.getElementById('addExpenseModalTitle').textContent = category === 'fixed' ? 'Thêm Khoản Chi Cố Định' : 'Thêm Khoản Chi Linh Hoạt';
+        document.getElementById('addExpenseName').value = '';
+        document.getElementById('addExpenseAmount').value = '';
+        this.openModal('modalAddExpense');
+      }
+
+      confirmAddExpense() {
+        const mData = this.getCurrentMonthData();
+        const category = document.getElementById('addExpenseCategory').value;
+        const name = document.getElementById('addExpenseName').value.trim();
+        let amount = parseFloat(document.getElementById('addExpenseAmount').value) || 0;
+        
+        if (!name) { alert("Vui lòng nhập tên khoản chi!"); return; }
+        if (amount > 0 && amount < 1000) amount = amount * 1000;
+
+        const list = category === 'fixed' ? mData.fixedExpenses : mData.flexibleExpenses;
+        list.push({ id: Date.now(), name, amount });
+
+        this.closeModal('modalAddExpense');
+        this.saveData(true);
+        this.renderExpenseTables();
+        this.renderGeneralOverview();
+        this.renderCharts();
+      }
+
+      // ===================================
+      // MEALS SECTION
+      // ===================================
+      renderMealSection() {
+        const mData = this.getCurrentMonthData();
+        const targetBf = Number(mData.mealTargets.breakfast) || 25;
+        const targetLn = Number(mData.mealTargets.lunch) || 30;
+        const targetDn = Number(mData.mealTargets.dinner) || 30;
+        const dailyTarget = targetBf + targetLn + targetDn;
+
+        document.getElementById('displayDailyMealTarget').textContent = this.formatCurrency(dailyTarget * 1000);
+        document.getElementById('displayBfTarget').textContent = targetBf;
+        document.getElementById('displayLnTarget').textContent = targetLn;
+        document.getElementById('displayDnTarget').textContent = targetDn;
+
+        const weekContainer = document.getElementById('weekTabsContainer');
+        weekContainer.innerHTML = (mData.weeks || []).map((w, idx) => `
+          <button onclick="app.changeWeek(${idx})" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap ${
+            idx === this.currentWeekIndex 
+            ? 'bg-warm-accent text-white shadow-sm' 
+            : 'bg-cream-100 text-cream-700 hover:bg-cream-200'
+          }">
+            Tuần ${w.weekNumber} (${w.startDay} - ${w.endDay})
+          </button>
+        `).join('');
+
+        if (this.currentWeekIndex >= mData.weeks.length) {
+          this.currentWeekIndex = 0;
+        }
+        const currentWeek = mData.weeks[this.currentWeekIndex];
+        if (!currentWeek) return;
+
+        const headerRow = document.getElementById('tableHeaderRow');
+        headerRow.innerHTML = `
+          <th class="py-3 px-3 w-36 font-extrabold border-r border-cream-300 text-center uppercase tracking-wide text-xs">Buổi Ăn</th>
+          ${currentWeek.days.map(d => `
+            <th class="py-2.5 px-2 text-center border-r border-cream-300 min-w-[105px]">
+              <div class="font-extrabold text-sm">${d.dayName}</div>
+              <div class="text-xs text-cream-600 font-semibold">Ngày ${d.dayNumber}</div>
+            </th>
+          `).join('')}
+        `;
+
+        const dayStats = currentWeek.days.map(d => {
+          const bfTotal = (d.breakfast || []).reduce((s, it) => s + (Number(it.price) || 0), 0);
+          const lnTotal = (d.lunch || []).reduce((s, it) => s + (Number(it.price) || 0), 0);
+          const dnTotal = (d.dinner || []).reduce((s, it) => s + (Number(it.price) || 0), 0);
+
+          const bfSave = targetBf - bfTotal;
+          const lnSave = targetLn - lnTotal;
+          const dnSave = targetDn - dnTotal;
+
+          const totalDay = bfTotal + lnTotal + dnTotal;
+          const saveDay = dailyTarget - totalDay;
+
+          return { bfTotal, lnTotal, dnTotal, bfSave, lnSave, dnSave, totalDay, saveDay };
+        });
+
+        const weekTotalSpent = dayStats.reduce((s, d) => s + d.totalDay, 0);
+        const weekTotalSave = (dailyTarget * 7) - weekTotalSpent;
+
+        document.getElementById('currentWeekTotal').textContent = this.formatCurrency(weekTotalSpent * 1000);
+        document.getElementById('currentWeekSave').textContent = this.formatCurrency(weekTotalSave * 1000);
+
+        this.renderMealTableBody(currentWeek, dayStats);
+        this.renderMealCardBody(currentWeek, dayStats);
+      }
+
+      renderMealTableBody(currentWeek, dayStats) {
+        const mData = this.getCurrentMonthData();
+        const tbody = document.getElementById('mealTableBody');
+        let html = '';
+
+        const targetBf = Number(mData.mealTargets.breakfast) || 25;
+        const targetLn = Number(mData.mealTargets.lunch) || 30;
+        const targetDn = Number(mData.mealTargets.dinner) || 30;
+
+        const renderMealRowBlock = (sectionName, sectionKey, targetVal) => {
+          html += `<tr class="bg-white">
+            <td class="py-3 px-3 font-extrabold text-cream-900 border-r border-cream-200 bg-cream-100/50 align-top">
+              <div class="text-sm font-bold text-cream-900">${sectionName}</div>
+              <div class="text-xs text-cream-600 font-semibold mt-0.5">Mục tiêu: <span class="text-warm-accent">${targetVal}k</span></div>
+            </td>
+            ${currentWeek.days.map((d, dIdx) => {
+              const items = d[sectionKey] || [];
+              const mealSubtotal = items.reduce((s, it) => s + (Number(it.price) || 0), 0);
+              const mealSave = targetVal - mealSubtotal;
+              return `
+                <td class="py-2 px-2 border-r border-cream-200 align-top bg-cream-50/20">
+                  <div class="space-y-1.5">
+                    ${items.map((it, itIdx) => `
+                      <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-cream-200 shadow-xs">
+                        <input type="text" placeholder="Tên món" value="${this.escapeHtml(it.meal || '')}"
+                          onchange="app.updateMealEntry(${dIdx}, '${sectionKey}', ${itIdx}, 'meal', this.value)"
+                          class="table-cell-input text-xs font-medium w-full py-0.5 px-1">
+                        <input type="number" placeholder="k" value="${it.price || ''}"
+                          onchange="app.updateMealEntry(${dIdx}, '${sectionKey}', ${itIdx}, 'price', this.value)"
+                          class="table-cell-input text-right text-xs font-bold w-12 py-0.5 px-1 text-cream-900">
+                        ${items.length > 1 ? `
+                          <button onclick="app.removeMealItem(${dIdx}, '${sectionKey}', ${itIdx})" class="text-cream-400 hover:text-warm-rose text-xs font-bold px-0.5" title="Xóa món">✕</button>
+                        ` : ''}
+                      </div>
+                    `).join('')}
+                    
+                    <button onclick="app.addMealItem(${dIdx}, '${sectionKey}')" class="w-full text-left text-[11px] text-warm-accent hover:text-warm-accentHover font-bold py-0.5 px-1 rounded hover:bg-cream-100 flex items-center gap-1 transition">
+                      <span>+ Thêm món</span>
+                    </button>
+                    
+                    <div class="pt-1 border-t border-cream-200 flex justify-between items-center text-[11px]">
+                      <span class="text-cream-500 font-medium">Tổng: <strong class="text-cream-800">${mealSubtotal}k</strong></span>
+                      <span class="font-bold ${mealSave < 0 ? 'text-warm-rose' : 'text-warm-sage'}">
+                        Save: ${mealSave}k
+                      </span>
+                    </div>
+                  </div>
+                </td>
+              `;
+            }).join('')}
+          </tr>`;
+        };
+
+        renderMealRowBlock("🌅 SÁNG (Breakfast)", "breakfast", targetBf);
+        renderMealRowBlock("☀️ TRƯA (Lunch)", "lunch", targetLn);
+        renderMealRowBlock("🌙 TỐI (Dinner)", "dinner", targetDn);
+
+        html += `<tr class="bg-cream-100/90 text-cream-900 font-extrabold border-t-2 border-cream-300">
+          <td class="py-3 px-3 border-r border-cream-300 text-left uppercase tracking-wider text-xs sm:text-sm font-black">
+            TỔNG NGÀY (Total):
+          </td>
+          ${dayStats.map(st => `
+            <td class="py-3 px-2 text-right border-r border-cream-200 text-sm sm:text-base font-black text-warm-accent">
+              ${st.totalDay > 0 ? st.totalDay + 'k' : '0'}
+            </td>
+          `).join('')}
+        </tr>`;
+
+        html += `<tr class="bg-gradient-to-r from-cream-100 via-white to-cream-50 font-extrabold border-b border-cream-300">
+          <td class="py-3 px-3 border-r border-cream-300 text-left uppercase tracking-wider text-xs sm:text-sm font-black text-warm-sage">
+            TIẾT KIỆM (Save Day):
+          </td>
+          ${dayStats.map(st => {
+            const isMinus = st.saveDay < 0;
+            return `<td class="py-3 px-2 text-right border-r border-cream-200 text-sm sm:text-base font-black ${isMinus ? 'text-warm-rose' : 'text-warm-sage'}">
+              ${st.saveDay}k
+            </td>`;
+          }).join('')}
+        </tr>`;
+
+        tbody.innerHTML = html;
+      }
+
+      renderMealCardBody(currentWeek, dayStats) {
+        const mData = this.getCurrentMonthData();
+        const cardContainer = document.getElementById('mealCardView');
+        cardContainer.innerHTML = currentWeek.days.map((d, dIdx) => {
+          const st = dayStats[dIdx];
+          const isSaveMinus = st.saveDay < 0;
+
+          const renderCardMealSlot = (label, sectionKey, targetVal, totalVal) => `
+            <div class="p-3 bg-cream-50/80 rounded-xl space-y-2 border border-cream-200/60">
+              <div class="flex justify-between items-center text-xs font-bold text-cream-800">
+                <span>${label}</span>
+                <span class="text-xs font-black text-warm-accent">Tổng: ${totalVal}k <span class="text-[11px] text-cream-500 font-normal">/ ${targetVal}k</span></span>
+              </div>
+              
+              <div class="space-y-1.5">
+                ${(d[sectionKey] || []).map((it, itIdx) => `
+                  <div class="flex items-center gap-1.5">
+                    <input type="text" placeholder="Tên món" value="${this.escapeHtml(it.meal || '')}"
+                      onchange="app.updateMealEntry(${dIdx}, '${sectionKey}', ${itIdx}, 'meal', this.value)"
+                      class="text-xs sm:text-sm bg-white border border-cream-200 rounded-lg px-2.5 py-1.5 w-full font-medium">
+                    <input type="number" placeholder="k" value="${it.price || ''}"
+                      onchange="app.updateMealEntry(${dIdx}, '${sectionKey}', ${itIdx}, 'price', this.value)"
+                      class="text-xs sm:text-sm text-right bg-white border border-cream-200 rounded-lg px-2 py-1.5 font-bold w-16 text-cream-900">
+                    ${(d[sectionKey] || []).length > 1 ? `
+                      <button onclick="app.removeMealItem(${dIdx}, '${sectionKey}', ${itIdx})" class="text-cream-400 hover:text-warm-rose font-bold text-xs p-1" title="Xóa món">✕</button>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+
+              <button onclick="app.addMealItem(${dIdx}, '${sectionKey}')" class="text-xs text-warm-accent hover:text-warm-accentHover font-bold inline-flex items-center gap-1 pt-1 transition">
+                <span>+ Thêm món khác</span>
+              </button>
+            </div>
+          `;
+
+          const targetBf = Number(mData.mealTargets.breakfast) || 25;
+          const targetLn = Number(mData.mealTargets.lunch) || 30;
+          const targetDn = Number(mData.mealTargets.dinner) || 30;
+
+          return `
+            <div class="bg-white rounded-2xl border border-warm-border p-5 shadow-cream-sm space-y-4">
+              <div class="flex items-center justify-between pb-2.5 border-b border-cream-100">
+                <div class="flex items-center gap-2">
+                  <span class="font-black text-cream-900 text-lg">${d.dayName}</span>
+                  <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-cream-200 text-cream-800">Ngày ${d.dayNumber}</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-[11px] text-cream-500 font-semibold block">Tiết kiệm:</span>
+                  <span class="text-sm font-black ${isSaveMinus ? 'text-warm-rose' : 'text-warm-sage'}">${st.saveDay}k</span>
+                </div>
+              </div>
+
+              ${renderCardMealSlot("🌅 Sáng", "breakfast", targetBf, st.bfTotal)}
+              ${renderCardMealSlot("☀️ Trưa", "lunch", targetLn, st.lnTotal)}
+              ${renderCardMealSlot("🌙 Tối", "dinner", targetDn, st.dnTotal)}
+
+              <div class="pt-3 border-t border-cream-100 flex items-center justify-between">
+                <span class="text-cream-700 font-bold text-xs uppercase tracking-wider">Tổng cả ngày:</span>
+                <span class="font-black text-warm-accent text-base sm:text-lg">${st.totalDay}k</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      addMealItem(dayIndex, mealTime) {
+        const mData = this.getCurrentMonthData();
+        const week = mData.weeks[this.currentWeekIndex];
+        if (week && week.days[dayIndex]) {
+          const day = week.days[dayIndex];
+          if (!day[mealTime]) day[mealTime] = [];
+          day[mealTime].push({ meal: "", price: 0 });
+
+          this.saveData(true);
+          this.renderMealSection();
+          this.renderGeneralOverview();
+          this.renderCharts();
+        }
+      }
+
+      removeMealItem(dayIndex, mealTime, itemIndex) {
+        const mData = this.getCurrentMonthData();
+        const week = mData.weeks[this.currentWeekIndex];
+        if (week && week.days[dayIndex]) {
+          const day = week.days[dayIndex];
+          if (day[mealTime] && day[mealTime].length > 1) {
+            day[mealTime].splice(itemIndex, 1);
+            this.saveData(true);
+            this.renderMealSection();
+            this.renderGeneralOverview();
+            this.renderCharts();
+          }
+        }
+      }
+
+      updateMealEntry(dayIndex, mealTime, itemIndex, field, value) {
+        const mData = this.getCurrentMonthData();
+        const week = mData.weeks[this.currentWeekIndex];
+        if (week && week.days[dayIndex]) {
+          const day = week.days[dayIndex];
+          if (!day[mealTime]) day[mealTime] = [{ meal: "", price: 0 }];
+          if (!day[mealTime][itemIndex]) day[mealTime][itemIndex] = { meal: "", price: 0 };
+          
+          if (field === 'price') {
+            day[mealTime][itemIndex].price = parseFloat(value) || 0;
+          } else {
+            day[mealTime][itemIndex].meal = value;
+          }
+
+          this.saveData(true);
+          this.renderMealSection();
+          this.renderGeneralOverview();
+          this.renderCharts();
+        }
+      }
+
+      changeWeek(weekIndex) {
+        this.currentWeekIndex = weekIndex;
+        this.renderMealSection();
+        this.renderCharts();
+      }
+
+      setMealView(mode) {
+        this.mealViewMode = mode;
+        const tblView = document.getElementById('mealTableView');
+        const crdView = document.getElementById('mealCardView');
+        const btnTbl = document.getElementById('viewBtnTable');
+        const btnCrd = document.getElementById('viewBtnCard');
+
+        if (mode === 'table') {
+          tblView.classList.remove('hidden');
+          crdView.classList.add('hidden');
+          btnTbl.className = "px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-white text-cream-900 shadow-sm transition";
+          btnCrd.className = "px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-cream-600 hover:text-cream-900 transition";
+        } else {
+          tblView.classList.add('hidden');
+          crdView.classList.remove('hidden');
+          btnCrd.className = "px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-white text-cream-900 shadow-sm transition";
+          btnTbl.className = "px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-cream-600 hover:text-cream-900 transition";
+        }
+      }
+
+      // ===================================
+      // CHARTS (CHART.JS)
+      // ===================================
+      renderCharts() {
+        const mData = this.getCurrentMonthData();
+        const fixedSpent = this.getFixedSpent();
+        const flexibleSpent = this.getFlexibleSpent();
+        const mealsSpent = this.getMealsSpent();
+        const total = fixedSpent + flexibleSpent + mealsSpent || 1;
+
+        document.getElementById('legendFixed').textContent = Math.round((fixedSpent / total) * 100) + '%';
+        document.getElementById('legendMeals').textContent = Math.round((mealsSpent / total) * 100) + '%';
+        document.getElementById('legendFlexible').textContent = Math.round((flexibleSpent / total) * 100) + '%';
+
+        // 1. Donut Chart
+        const donutCtx = document.getElementById('generalDonutChart')?.getContext('2d');
+        if (donutCtx) {
+          if (this.donutChart) this.donutChart.destroy();
+          this.donutChart = new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+              labels: ['Cố định', 'Ăn uống', 'Linh hoạt'],
+              datasets: [{
+                data: [fixedSpent, mealsSpent, flexibleSpent],
+                backgroundColor: ['#B07D4F', '#4F772D', '#D4A373'],
+                borderWidth: 3,
+                borderColor: '#FFFFFF'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              cutout: '70%'
+            }
+          });
+        }
+
+        // 2. Bar Chart
+        const barCtx = document.getElementById('budgetCompareBarChart')?.getContext('2d');
+        if (barCtx) {
+          if (this.compareBarChart) this.compareBarChart.destroy();
+          this.compareBarChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+              labels: ['Cố định', 'Ăn uống', 'Linh hoạt'],
+              datasets: [
+                {
+                  label: 'Hạn mức (Budget)',
+                  data: [mData.budgets.fixed, mData.budgets.meals, mData.budgets.flexible],
+                  backgroundColor: '#E8DFD3',
+                  borderRadius: 8
+                },
+                {
+                  label: 'Thực chi (Spent)',
+                  data: [fixedSpent, mealsSpent, flexibleSpent],
+                  backgroundColor: ['#B07D4F', '#4F772D', '#D4A373'],
+                  borderRadius: 8
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12, family: 'Be Vietnam Pro', weight: 'bold' } } }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: (v) => (v / 1000) + 'k',
+                    font: { size: 11, family: 'Be Vietnam Pro' }
+                  }
+                },
+                x: {
+                  ticks: { font: { size: 12, family: 'Be Vietnam Pro', weight: 'bold' } }
+                }
+              }
+            }
+          });
+        }
+
+        // 3. Line Chart
+        const lineCtx = document.getElementById('dailyMealLineChart')?.getContext('2d');
+        if (lineCtx) {
+          const currentWeek = mData.weeks[this.currentWeekIndex];
+          if (currentWeek) {
+            const labels = currentWeek.days.map(d => `${d.dayName} (${d.dayNumber})`);
+            const dailyTarget = (mData.mealTargets.breakfast + mData.mealTargets.lunch + mData.mealTargets.dinner);
+            const spentData = currentWeek.days.map(d => {
+              const bf = (d.breakfast || []).reduce((s, it) => s + (Number(it.price) || 0), 0);
+              const ln = (d.lunch || []).reduce((s, it) => s + (Number(it.price) || 0), 0);
+              const dn = (d.dinner || []).reduce((s, it) => s + (Number(it.price) || 0), 0);
+              return bf + ln + dn;
+            });
+
+            if (this.mealLineChart) this.mealLineChart.destroy();
+            this.mealLineChart = new Chart(lineCtx, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [
+                  {
+                    label: 'Thực chi ngày (k)',
+                    data: spentData,
+                    borderColor: '#B07D4F',
+                    backgroundColor: 'rgba(176, 125, 79, 0.12)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#B07D4F'
+                  },
+                  {
+                    label: 'Mục tiêu (85k)',
+                    data: Array(currentWeek.days.length).fill(dailyTarget),
+                    borderColor: '#4F772D',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12, family: 'Be Vietnam Pro', weight: 'bold' } } }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: (v) => v + 'k',
+                      font: { size: 11, family: 'Be Vietnam Pro' }
+                    }
+                  },
+                  x: {
+                    ticks: { font: { size: 12, family: 'Be Vietnam Pro', weight: 'bold' } }
+                  }
+                }
+              }
+            });
+          }
+        }
+
+        this.updateAnalyticsHighlights();
+      }
+
+      updateAnalyticsHighlights() {
+        const mData = this.getCurrentMonthData();
+        const mealCount = {};
+        (mData.weeks || []).forEach(w => {
+          (w.days || []).forEach(d => {
+            ['breakfast', 'lunch', 'dinner'].forEach(time => {
+              (d[time] || []).forEach(it => {
+                const name = (it.meal || '').trim();
+                if (name) mealCount[name] = (mealCount[name] || 0) + 1;
+              });
+            });
+          });
+        });
+
+        let topMeal = 'Chưa có';
+        let maxCount = 0;
+        for (const m in mealCount) {
+          if (mealCount[m] > maxCount) {
+            maxCount = mealCount[m];
+            topMeal = m;
+          }
+        }
+        document.getElementById('topMealName').textContent = topMeal;
+        document.getElementById('topMealCount').textContent = maxCount > 0 ? `Xuất hiện ${maxCount} lần trong tháng` : 'Hãy nhập thêm món ăn';
+
+        const currentWeek = mData.weeks[this.currentWeekIndex];
+        if (currentWeek) {
+          const dailyTarget = (mData.mealTargets.breakfast + mData.mealTargets.lunch + mData.mealTargets.dinner);
+          let bestDay = 'Chưa có';
+          let maxSave = -999;
+          currentWeek.days.forEach(d => {
+            const spent = (d.breakfast || []).reduce((s, it) => s + (Number(it.price) || 0), 0)
+                        + (d.lunch || []).reduce((s, it) => s + (Number(it.price) || 0), 0)
+                        + (d.dinner || []).reduce((s, it) => s + (Number(it.price) || 0), 0);
+            if (spent > 0) {
+              const save = dailyTarget - spent;
+              if (save > maxSave) {
+                maxSave = save;
+                bestDay = `${d.dayName} (Save ${save}k)`;
+              }
+            }
+          });
+          document.getElementById('bestSaveDay').textContent = maxSave !== -999 ? bestDay : 'Chưa có';
+        }
+
+        const totalBudget = Number(mData.budgets.fixed) + Number(mData.budgets.meals) + Number(mData.budgets.flexible);
+        const totalSpent = this.getFixedSpent() + this.getFlexibleSpent() + this.getMealsSpent();
+        const rate = Math.max(Math.round(((totalBudget - totalSpent) / totalBudget) * 100), 0);
+        document.getElementById('overallSavingsRate').textContent = rate + '%';
+      }
+
+      // ===================================
+      // SETTINGS & BUDGETS
+      // ===================================
+      openSettingsModal() {
+        const mData = this.getCurrentMonthData();
+        document.getElementById('inputBudgetFixed').value = mData.budgets.fixed;
+        document.getElementById('inputBudgetMeals').value = mData.budgets.meals;
+        document.getElementById('inputBudgetFlexible').value = mData.budgets.flexible;
+        this.openModal('modalSettings');
+      }
+
+      editBudgetPrompt(type) {
+        this.openSettingsModal();
+        if (type === 'fixed') document.getElementById('inputBudgetFixed').focus();
+        if (type === 'meals') document.getElementById('inputBudgetMeals').focus();
+        if (type === 'flexible') document.getElementById('inputBudgetFlexible').focus();
+      }
+
+      saveBudgets() {
+        const mData = this.getCurrentMonthData();
+        const fixed = parseFloat(document.getElementById('inputBudgetFixed').value) || 0;
+        const meals = parseFloat(document.getElementById('inputBudgetMeals').value) || 0;
+        const flexible = parseFloat(document.getElementById('inputBudgetFlexible').value) || 0;
+
+        mData.budgets.fixed = fixed;
+        mData.budgets.meals = meals;
+        mData.budgets.flexible = flexible;
+
+        this.closeModal('modalSettings');
+        this.saveData(true);
+        this.renderGeneralOverview();
+        this.renderCharts();
+      }
+
+      openMealTargetModal() {
+        const mData = this.getCurrentMonthData();
+        document.getElementById('inputTargetBf').value = mData.mealTargets.breakfast;
+        document.getElementById('inputTargetLn').value = mData.mealTargets.lunch;
+        document.getElementById('inputTargetDn').value = mData.mealTargets.dinner;
+        const sum = mData.mealTargets.breakfast + mData.mealTargets.lunch + mData.mealTargets.dinner;
+        document.getElementById('previewDailySum').textContent = sum + 'k';
+        this.openModal('modalMealTarget');
+      }
+
+      saveMealTarget() {
+        const mData = this.getCurrentMonthData();
+        const bf = parseFloat(document.getElementById('inputTargetBf').value) || 0;
+        const ln = parseFloat(document.getElementById('inputTargetLn').value) || 0;
+        const dn = parseFloat(document.getElementById('inputTargetDn').value) || 0;
+
+        mData.mealTargets.breakfast = bf;
+        mData.mealTargets.lunch = ln;
+        mData.mealTargets.dinner = dn;
+
+        this.closeModal('modalMealTarget');
+        this.saveData(true);
+        this.renderMealSection();
+        this.renderCharts();
+      }
+
+      openDataModal() {
+        this.openModal('modalData');
+      }
+
+      exportDataJSON() {
+        const jsonStr = JSON.stringify(this.data, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `money-management-${this.data.userName || 'user'}-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast('📥 Đã tải file sao lưu về máy!');
+      }
+
+      importDataJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (parsed && (parsed.months || parsed.weeks)) {
+              if (parsed.months) {
+                this.data = parsed;
+              } else {
+                this.data = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE_DATA));
+                this.data.months["11/2026"] = parsed;
+              }
+              this.saveData(false);
+              this.renderAll();
+              this.closeModal('modalData');
+              this.showToast('✅ Khôi phục dữ liệu thành công!');
+            } else {
+              alert('File dữ liệu không đúng định dạng!');
+            }
+          } catch (err) {
+            alert('Lỗi đọc file JSON: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      resetToTemplate() {
+        if (confirm("Bạn có chắc muốn khôi phục lại dữ liệu mẫu gốc ban đầu không? Toàn bộ thay đổi hiện tại sẽ được thay thế.")) {
+          this.data = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE_DATA));
+          this.saveData(true);
+          this.renderAll();
+          this.closeModal('modalData');
+          this.showToast('🔄 Đã nạp lại dữ liệu gốc!');
+        }
+      }
+
+      openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+      }
+
+      closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+      }
+
+      showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMessage').textContent = msg;
+        toast.classList.remove('translate-y-16', 'opacity-0');
+        setTimeout(() => {
+          toast.classList.add('translate-y-16', 'opacity-0');
+        }, 2500);
+      }
+
+      formatCurrency(num) {
+        return new Intl.NumberFormat('vi-VN').format(num) + ' đ';
+      }
+
+      escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+    }
+
+    const app = new ExpenseApp();
+    window.addEventListener('DOMContentLoaded', () => {
+      app.init();
+    });
+  </script>
+</body>
+</html>
