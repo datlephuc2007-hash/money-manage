@@ -208,7 +208,7 @@
         </button>
         <button id="tabBtn-meals" onclick="app.switchTab('meals')" class="tab-btn flex-1 py-2 px-1 sm:px-4 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center justify-center gap-1 sm:gap-2 transition">
           <span class="text-sm sm:text-base">🍱</span>
-          <span class="hidden sm:inline">Nhật Ký Đồ Ăn (Từng Ngày)</span>
+          <span class="hidden sm:inline">Nhật Ký Đồ Ăn</span>
           <span class="sm:hidden">Ăn Uống</span>
         </button>
         <button id="tabBtn-charts" onclick="app.switchTab('charts')" class="tab-btn flex-1 py-2 px-1 sm:px-4 rounded-xl text-cream-700 hover:text-cream-900 hover:bg-cream-200/60 flex items-center justify-center gap-1 sm:gap-2 transition">
@@ -243,7 +243,7 @@
             <p class="text-sm sm:text-base text-cream-700 mt-2 flex flex-wrap items-center gap-2.5">
               <span>Còn lại trong tháng: <strong id="statTotalRemaining" class="text-warm-sage font-extrabold text-base sm:text-lg">0 đ</strong></span>
               <span class="text-cream-300">•</span>
-              <span id="statQuote" class="italic text-warm-accent font-semibold">"Dư ra đi chơi nòo! ✨"</span>
+              <span id="statQuote" class="italic text-warm-accent font-semibold">Dư ra đi chơi nòo! ✨</span>
             </p>
           </div>
 
@@ -356,7 +356,7 @@
               <div>
                 <span class="text-2xl">🛍️</span>
                 <h3 class="font-extrabold text-cream-900 text-lg mt-1">Tiền Linh Hoạt</h3>
-                <p class="text-xs sm:text-sm text-cream-500">Phụ phẩm, bàn chải, ăn vặt, đi chơi...</p>
+                <p class="text-xs sm:text-sm text-cream-500">Phụ phẩm, ăn vặt, đi chơi...</p>
               </div>
               <button onclick="app.editBudgetPrompt('flexible')" class="text-xs sm:text-sm text-warm-accent hover:text-warm-accentHover font-bold bg-cream-100 hover:bg-cream-200 px-3 py-1.5 rounded-xl transition">
                 Sửa hạn mức
@@ -493,7 +493,7 @@
                   <h4 class="font-extrabold text-cream-900 text-base flex items-center gap-2">
                     <span>🛍️</span> Chi Phí Linh Hoạt
                   </h4>
-                  <p class="text-xs text-cream-500">Phụ phẩm, mua sắm, bạn bè mượn...</p>
+                  <p class="text-xs text-cream-500">Phụ phẩm, mua sắm, học tập...</p>
                 </div>
                 <button onclick="app.addExpenseModal('flexible')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-warm-accent text-white hover:bg-warm-accentHover shadow-sm transition">
                   <span>+ Popup</span>
@@ -815,7 +815,6 @@
           <span class="text-2xl">🔥</span>
           <div>
             <h3 class="font-extrabold text-cream-900 text-lg">Đồng Bộ Đám Mây Firebase</h3>
-            <p class="text-xs text-cream-500">Google Cloud Realtime Database (Tự động 100%, Miễn phí)</p>
           </div>
         </div>
         <button onclick="app.closeModal('modalFirebase')" class="text-cream-400 hover:text-cream-700 font-bold text-lg">✕</button>
